@@ -113,7 +113,7 @@
     </ul>
   </div>
 
-  <!-- Header: Sticky with Notifications -->
+  <!-- Header: Sticky with main notification -->
   <header class="bg-white shadow-md sticky top-[64px] z-40 p-4 flex justify-between items-center">
     <h1 class="font-bold text-xl">Clinic Admin Panel</h1>
     <div>
@@ -121,11 +121,17 @@
     </div>
   </header>
 
-  <!-- Tabs: Today / This Week / This Month -->
+  <!-- Tabs: Today / This Week / This Month with per-tab badge -->
   <div class="bg-gray-50 p-2 flex space-x-4 sticky top-[112px] z-30 shadow-sm">
-    <button @click="activeTab='today'" :class="activeTab==='today'? 'border-b-2 border-blue-500 font-semibold' : ''">Today</button>
-    <button @click="activeTab='week'" :class="activeTab==='week'? 'border-b-2 border-blue-500 font-semibold' : ''">This Week</button>
-    <button @click="activeTab='month'" :class="activeTab==='month'? 'border-b-2 border-blue-500 font-semibold' : ''">This Month</button>
+    <button @click="activeTab='today'; updateNewAppointments()" :class="activeTab==='today'? 'border-b-2 border-blue-500 font-semibold' : ''">
+      Today <span x-show="newAppointmentsToday > 0" x-text="newAppointmentsToday" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+    </button>
+    <button @click="activeTab='week'; updateNewAppointments()" :class="activeTab==='week'? 'border-b-2 border-blue-500 font-semibold' : ''">
+      This Week <span x-show="newAppointmentsWeek > 0" x-text="newAppointmentsWeek" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+    </button>
+    <button @click="activeTab='month'; updateNewAppointments()" :class="activeTab==='month'? 'border-b-2 border-blue-500 font-semibold' : ''">
+      This Month <span x-show="newAppointmentsMonth > 0" x-text="newAppointmentsMonth" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+    </button>
   </div>
 
   <!-- Sub-tabs: Appointments / Patients -->
@@ -187,6 +193,9 @@ function dashboard() {
     patients: [],
     feedbacks: [],
     newAppointments: 0,
+    newAppointmentsToday: 0,
+    newAppointmentsWeek: 0,
+    newAppointmentsMonth: 0,
     aiInsights: [],
 
     async fetchData() {
@@ -198,8 +207,8 @@ function dashboard() {
       this.patients = patients || [];
       this.feedbacks = feedbacks || [];
 
-      this.updateAIInsights();
       this.updateNewAppointments();
+      this.updateAIInsights();
     },
 
     filteredAppointments(period) {
@@ -207,17 +216,12 @@ function dashboard() {
       const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
       const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
 
-      let filtered = this.appointments.filter(appt => {
+      return this.appointments.filter(appt => {
         const apptDate = new Date(appt.date);
         if(period==='today') return apptDate.toDateString() === today.toDateString();
         if(period==='week') return apptDate > today && apptDate <= weekEnd;
         if(period==='month') return apptDate > weekEnd && apptDate <= monthEnd;
       });
-
-      this.newAppointments = filtered.filter(a=>a.is_new).length;
-      this.updateAIInsights();
-
-      return filtered;
     },
 
     updateAIInsights() {
@@ -236,7 +240,24 @@ function dashboard() {
 
     updateNewAppointments() {
       const today = new Date();
-      this.newAppointments = this.appointments.filter(a => new Date(a.date).toDateString() === today.toDateString() && a.is_new).length;
+      const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
+      const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+
+      this.newAppointmentsToday = this.appointments.filter(a => 
+        new Date(a.date).toDateString() === today.toDateString() && a.is_new
+      ).length;
+
+      this.newAppointmentsWeek = this.appointments.filter(a =>
+        new Date(a.date) > today && new Date(a.date) <= weekEnd && a.is_new
+      ).length;
+
+      this.newAppointmentsMonth = this.appointments.filter(a =>
+        new Date(a.date) > weekEnd && new Date(a.date) <= monthEnd && a.is_new
+      ).length;
+
+      if(this.activeTab === 'today') this.newAppointments = this.newAppointmentsToday;
+      if(this.activeTab === 'week') this.newAppointments = this.newAppointmentsWeek;
+      if(this.activeTab === 'month') this.newAppointments = this.newAppointmentsMonth;
     },
 
     markAsSeen(appt) {
@@ -247,15 +268,12 @@ function dashboard() {
       supabase.from('appointments')
         .update({ is_new: false })
         .eq('id', appt.id)
-        .then(({ error }) => {
-          if (error) console.error('Error updating appointment:', error);
-        });
+        .then(({ error }) => { if (error) console.error(error); });
     },
 
     init() {
       this.fetchData();
 
-      // Real-time updates via Supabase subscriptions
       supabase.from('appointments').on('INSERT', payload => {
         this.appointments.push(payload.new);
         this.updateNewAppointments();
@@ -274,4 +292,4 @@ function dashboard() {
     }
   }
 }
-            </script>
+</script>
