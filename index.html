@@ -4,25 +4,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Ultimate Landing Page</title>
+  <!-- Alpine.js -->
   <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <!-- htmx -->
   <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@stimulus/core@3.2.1/dist/stimulus.umd.js"></script>
+  <!-- Tailwind CSS -->
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
-  <!-- Simple Vanilla JS Helpers -->
+  <!-- AOS for animations -->
   <link rel="stylesheet" href="https://unpkg.com/aos@2.3.4/dist/aos.css" />
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
-  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <!-- Swiper JS -->
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css" />
+  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+  <!-- Micromodal for modals -->
   <script src="https://unpkg.com/micromodal/dist/micromodal.min.js"></script>
+  <!-- Flatpickr for date picker -->
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  <!-- Tippy.js for tooltips -->
   <script src="https://unpkg.com/@popperjs/core@2"></script>
   <script src="https://unpkg.com/tippy.js@6"></script>
+  <style>
+    /* Custom styles */
+    .btn-primary {
+      background-color: #3b82f6;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .btn-primary:hover {
+      background-color: #2563eb;
+    }
+    .sticky-menu {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: white;
+      border-top: 1px solid #e5e7eb;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.5rem 0;
+      z-index: 1000;
+    }
+    .menu-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.25rem;
+      color: #6b7280;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+    .menu-item:hover {
+      color: #3b82f6;
+    }
+    .modal__container {
+      max-width: 90%;
+      margin: auto;
+      border-radius: 0.5rem;
+    }
+  </style>
 </head>
 <body class="bg-gray-50 font-sans">
 
   <!-- HERO SECTION -->
-  <section class="relative bg-blue-600 text-white h-screen flex items-center justify-center">
+  <section class="relative bg-blue-600 text-white h-screen flex items-center justify-center overflow-hidden">
     <div class="text-center px-4">
       <h1 class="text-4xl md:text-6xl font-bold mb-4">Welcome to Our Landing Page</h1>
       <p class="text-lg md:text-2xl mb-6">Modern interactive landing page with AI-powered workflow</p>
@@ -116,20 +167,20 @@
   </section>
 
   <!-- STICKY BOTTOM MENU -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex justify-around py-3">
-    <button class="flex flex-col items-center text-gray-700 hover:text-blue-600">
+  <nav class="sticky-menu">
+    <button class="menu-item">
       <span>🏠</span>
       <span class="text-xs">Home</span>
     </button>
-    <button class="flex flex-col items-center text-gray-700 hover:text-blue-600">
+    <button class="menu-item">
       <span>⭐</span>
       <span class="text-xs">Services</span>
     </button>
-    <button class="flex flex-col items-center text-gray-700 hover:text-blue-600" x-data @click="$dispatch('open-modal', { id: 'demo-modal' })">
+    <button class="menu-item" x-data @click="$dispatch('open-modal', { id: 'demo-modal' })">
       <span>💬</span>
       <span class="text-xs">Chat</span>
     </button>
-    <button class="flex flex-col items-center text-gray-700 hover:text-blue-600">
+    <button class="menu-item">
       <span>👤</span>
       <span class="text-xs">Profile</span>
     </button>
