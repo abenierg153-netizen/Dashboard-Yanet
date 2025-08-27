@@ -1,206 +1,240 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ activeTab: 'dashboard' }">
+<html lang="en" x-data="dashboard()" x-init="init()">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yanet Dental Clinic Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100">
+<body class="bg-gray-100 font-sans">
 
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="container mx-auto flex justify-between items-center p-4">
-            <div class="flex items-center">
-                <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
-                <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button class="text-gray-600 hover:text-blue-600">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="text-gray-600 hover:text-blue-600">
-                    <i class="fas fa-user-circle"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Sticky Bottom Menu (Mobile App-like) -->
+    <!-- Sticky Bottom Menu -->
     <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden z-50">
         <div class="flex justify-around">
-            <button :class="activeTab==='dashboard' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='dashboard'">Dashboard</button>
-            <button :class="activeTab==='appointments' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='appointments'">Appointments</button>
-            <button :class="activeTab==='patients' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='patients'">Patients</button>
-            <button :class="activeTab==='reports' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='reports'">Reports</button>
-            <button :class="activeTab==='settings' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='settings'">Settings</button>
-            <button :class="activeTab==='services' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='services'">Services</button>
-            <button :class="activeTab==='feedback' ? 'text-blue-600 font-bold' : 'text-gray-600'" @click="activeTab='feedback'">Feedback</button>
+            <button @click="activeTab='dashboard'" :class="activeTab==='dashboard' ? 'text-blue-600' : 'text-gray-600'">Dashboard</button>
+            <button @click="activeTab='appointments'" :class="activeTab==='appointments' ? 'text-blue-600' : 'text-gray-600'">Appointments</button>
+            <button @click="activeTab='patients'" :class="activeTab==='patients' ? 'text-blue-600' : 'text-gray-600'">Patients</button>
+            <button @click="activeTab='reports'" :class="activeTab==='reports' ? 'text-blue-600' : 'text-gray-600'">Reports</button>
+            <button @click="activeTab='settings'" :class="activeTab==='settings' ? 'text-blue-600' : 'text-gray-600'">Settings</button>
+            <button @click="activeTab='service'" :class="activeTab==='service' ? 'text-blue-600' : 'text-gray-600'">Service</button>
+            <button @click="activeTab='feedback'" :class="activeTab==='feedback' ? 'text-blue-600' : 'text-gray-600'">Feedback</button>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto p-4">
+    <div class="min-h-screen pb-20">
+        <!-- Header -->
+        <header class="bg-white shadow">
+            <div class="container mx-auto flex justify-between items-center p-4">
+                <div class="flex items-center">
+                    <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
+                    <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
+                </div>
+            </div>
+        </header>
 
-        <!-- Dashboard Section -->
-        <section x-show="activeTab==='dashboard'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Dashboard Overview</h2>
+        <!-- Dashboard -->
+        <section x-show="activeTab==='dashboard'" x-transition class="container mx-auto p-4 space-y-4">
+            <h2 class="text-2xl font-bold">Dashboard Overview</h2>
 
-            <!-- Quick Stats -->
+            <!-- Live Stats Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-4 rounded-lg shadow">
                     <h3 class="font-semibold">Appointments Today</h3>
-                    <p class="text-2xl" x-text="5"></p>
+                    <p class="text-2xl" x-text="stats.appointments"></p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">New Patients</h3>
-                    <p class="text-2xl" x-text="3"></p>
+                    <h3 class="font-semibold">New Patients Today</h3>
+                    <p class="text-2xl" x-text="stats.newPatients"></p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <h3 class="font-semibold">Happy Patients</h3>
-                    <p class="text-2xl" x-text="120"></p>
+                    <p class="text-2xl" x-text="stats.happyPatients"></p>
                 </div>
                 <div class="bg-white p-4 rounded-lg shadow">
                     <h3 class="font-semibold">Upcoming Appointments</h3>
-                    <ul class="text-sm">
-                        <li>John Doe - 10:00 AM</li>
-                        <li>Jane Smith - 11:30 AM</li>
-                        <li>Mark Wilson - 1:00 PM</li>
+                    <ul>
+                        <template x-for="appt in stats.upcomingAppointments" :key="appt.time">
+                            <li x-text="`${appt.patient} - ${appt.time}`"></li>
+                        </template>
                     </ul>
                 </div>
             </div>
 
             <!-- AI Insights -->
-            <div class="bg-purple-50 p-4 rounded-lg shadow border border-purple-200">
-                <h3 class="font-semibold flex items-center space-x-2">
-                    <span>✨</span><span>AI Insights</span>
-                </h3>
-                <ul class="mt-2 text-gray-700 text-sm space-y-1">
-                    <li>High demand: Deep Cleansing Facial (next 2 weeks).</li>
-                    <li>Potential no-shows: 3 appointments today.</li>
-                    <li>Peak hours: 10AM - 1PM, consider extending staff.</li>
+            <div class="bg-gradient-to-r from-purple-50 to-blue-50 p-6 rounded-lg border border-purple-200">
+                <h3 class="font-semibold mb-2">AI Insights</h3>
+                <ul class="space-y-2">
+                    <li x-text="aiInsights[0]"></li>
+                    <li x-text="aiInsights[1]"></li>
+                    <li x-text="aiInsights[2]"></li>
                 </ul>
+            </div>
+
+            <!-- Quick Action Buttons -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                <button class="bg-blue-600 text-white p-4 rounded-lg shadow hover:shadow-md" @click="quickAction('viewAppointments')">View Appointments</button>
+                <button class="bg-green-600 text-white p-4 rounded-lg shadow hover:shadow-md" @click="quickAction('callPatient')">Call Patient</button>
+                <button class="bg-yellow-600 text-white p-4 rounded-lg shadow hover:shadow-md" @click="quickAction('exportReport')">Export Report</button>
+                <button class="bg-purple-600 text-white p-4 rounded-lg shadow hover:shadow-md" @click="quickAction('addAppointment')">Add Appointment</button>
             </div>
         </section>
 
-        <!-- Appointments Section -->
-        <section x-show="activeTab==='appointments'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Appointments</h2>
-
-            <!-- Filters -->
-            <div class="flex space-x-2 mb-2">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded">Daily</button>
-                <button class="bg-gray-200 text-gray-700 px-4 py-2 rounded">Weekly</button>
-                <input type="text" placeholder="Search patient..." class="border px-2 py-1 rounded">
-            </div>
-
-            <!-- Table -->
+        <!-- Appointments -->
+        <section x-show="activeTab==='appointments'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Appointments</h2>
             <div class="overflow-x-auto bg-white rounded-lg shadow">
-                <table class="min-w-full">
+                <table class="min-w-full border">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="border px-4 py-2 text-left text-xs">Time</th>
-                            <th class="border px-4 py-2 text-left text-xs">Patient</th>
-                            <th class="border px-4 py-2 text-left text-xs">Service</th>
-                            <th class="border px-4 py-2 text-left text-xs">Status</th>
-                            <th class="border px-4 py-2 text-left text-xs">Actions</th>
+                            <th class="border px-4 py-2">Time</th>
+                            <th class="border px-4 py-2">Patient</th>
+                            <th class="border px-4 py-2">Service</th>
+                            <th class="border px-4 py-2">Status</th>
+                            <th class="border px-4 py-2">Dentist</th>
+                            <th class="border px-4 py-2">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr class="hover:bg-gray-50">
-                            <td class="border px-4 py-2">10:00 AM</td>
-                            <td class="border px-4 py-2">John Doe</td>
-                            <td class="border px-4 py-2">Cleaning</td>
-                            <td class="border px-4 py-2 text-green-600">Confirmed</td>
-                            <td class="border px-4 py-2 space-x-1">
-                                <button class="text-blue-600 text-sm">Confirm</button>
-                                <button class="text-red-600 text-sm">Cancel</button>
-                                <button class="text-gray-600 text-sm">Call</button>
-                            </td>
-                        </tr>
-                        <!-- Add more rows dynamically using Alpine.js or htmx -->
+                        <template x-for="appt in appointments" :key="appt.id">
+                            <tr class="hover:bg-gray-50">
+                                <td class="border px-4 py-2" x-text="appt.time"></td>
+                                <td class="border px-4 py-2" x-text="appt.patient"></td>
+                                <td class="border px-4 py-2" x-text="appt.service"></td>
+                                <td class="border px-4 py-2" :class="{'text-green-500': appt.status==='Confirmed','text-red-500': appt.status==='Cancelled'}" x-text="appt.status"></td>
+                                <td class="border px-4 py-2" x-text="appt.dentist"></td>
+                                <td class="border px-4 py-2 space-x-2">
+                                    <button class="text-blue-600" @click="updateStatus(appt,'Confirmed')">Confirm</button>
+                                    <button class="text-red-600" @click="updateStatus(appt,'Cancelled')">Cancel</button>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- Patients Section -->
-        <section x-show="activeTab==='patients'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Patients</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">Total Patients</h3>
-                    <p class="text-2xl" x-text="150"></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">New vs Returning</h3>
-                    <div class="h-24 bg-gray-200 rounded"></div>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">Recent Patients</h3>
-                    <ul class="text-sm">
-                        <li>Jane Smith</li>
-                        <li>Mark Wilson</li>
-                        <li>Anna Lee</li>
-                    </ul>
-                </div>
+        <!-- Patients -->
+        <section x-show="activeTab==='patients'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Patients</h2>
+            <div class="bg-white p-4 rounded-lg shadow space-y-4">
+                <p>Total Patients: <span x-text="patients.total"></span></p>
+                <p>New Patients Today: <span x-text="patients.newToday"></span></p>
             </div>
         </section>
 
-        <!-- Reports Section -->
-        <section x-show="activeTab==='reports'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Reports</h2>
+        <!-- Reports -->
+        <section x-show="activeTab==='reports'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Reports</h2>
             <div class="bg-white p-4 rounded-lg shadow space-y-2">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Appointments CSV</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Patient Data PDF</button>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Staff Performance</button>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded" @click="exportReport('appointments')">Export Appointments CSV</button>
+                <button class="bg-green-600 text-white px-4 py-2 rounded" @click="exportReport('patients')">Export Patients CSV</button>
             </div>
         </section>
 
-        <!-- Settings Section -->
-        <section x-show="activeTab==='settings'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Settings</h2>
-            <div class="bg-white p-4 rounded-lg shadow">
+        <!-- Settings -->
+        <section x-show="activeTab==='settings'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Settings & Staff Performance</h2>
+            <div class="bg-white p-4 rounded-lg shadow space-y-2">
                 <h3 class="font-semibold">Clinic Info</h3>
                 <p>Address: 123 Dental St.</p>
                 <p>Contact: (123) 456-7890</p>
                 <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow mt-4">
-                <h3 class="font-semibold">Staff Performance</h3>
-                <div class="h-32 bg-gray-200 rounded"></div>
-            </div>
-        </section>
-
-        <!-- Services Section -->
-        <section x-show="activeTab==='services'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Services</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">Deep Cleaning</h3>
-                    <p class="text-sm text-gray-600">90 min - $120</p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">Teeth Whitening</h3>
-                    <p class="text-sm text-gray-600">60 min - $150</p>
+                <h3 class="font-semibold mt-4">Staff Performance</h3>
+                <div x-for="staff in staffPerformance" :key="staff.name" class="flex justify-between border-b py-1">
+                    <span x-text="staff.name"></span>
+                    <span x-text="staff.appointments + ' appointments'"></span>
                 </div>
             </div>
         </section>
 
-        <!-- Feedback Section -->
-        <section x-show="activeTab==='feedback'" class="space-y-4">
-            <h2 class="text-2xl font-bold mb-2">Feedback</h2>
+        <!-- Service -->
+        <section x-show="activeTab==='service'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Services</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <template x-for="service in services" :key="service.id">
+                    <div class="bg-white p-4 rounded-lg shadow">
+                        <h3 class="font-semibold" x-text="service.name"></h3>
+                        <p x-text="service.description"></p>
+                        <p class="font-bold mt-2" x-text="'$'+service.price"></p>
+                    </div>
+                </template>
+            </div>
+        </section>
+
+        <!-- Feedback -->
+        <section x-show="activeTab==='feedback'" x-transition class="container mx-auto p-4">
+            <h2 class="text-2xl font-bold mb-4">Feedback</h2>
             <ul class="bg-white p-4 rounded-lg shadow space-y-2">
-                <li class="border-b py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
-                <li class="border-b py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
+                <template x-for="fb in feedbacks" :key="fb.id">
+                    <li x-text="fb.patient + ' - ' + fb.rating + ' - ' + fb.comment"></li>
+                </template>
             </ul>
         </section>
 
-    </main>
+    </div>
+
+    <script>
+        function dashboard() {
+            return {
+                activeTab: 'dashboard',
+                stats: {
+                    appointments: 5,
+                    newPatients: 3,
+                    happyPatients: 120,
+                    upcomingAppointments: [
+                        { patient: 'John Doe', time: '10:00 AM' },
+                        { patient: 'Jane Smith', time: '11:30 AM' },
+                        { patient: 'Mark Wilson', time: '1:00 PM' },
+                    ]
+                },
+                aiInsights: [
+                    "High demand for Cleaning services predicted today.",
+                    "2 appointments likely no-show, reminder sent.",
+                    "Facial treatments revenue expected to increase by 12%."
+                ],
+                appointments: [
+                    { id: 1, time: '10:00 AM', patient: 'John Doe', service: 'Cleaning', status: 'Confirmed', dentist: 'Dr. Smith' },
+                    { id: 2, time: '11:30 AM', patient: 'Jane Smith', service: 'Filling', status: 'Confirmed', dentist: 'Dr. Lee' },
+                    { id: 3, time: '1:00 PM', patient: 'Mark Wilson', service: 'Whitening', status: 'Cancelled', dentist: 'Dr. Kim' },
+                ],
+                patients: { total: 150, newToday: 3 },
+                staffPerformance: [
+                    { name: 'Dr. Smith', appointments: 12 },
+                    { name: 'Dr. Lee', appointments: 10 },
+                    { name: 'Dr. Kim', appointments: 8 },
+                ],
+                services: [
+                    { id: 1, name: 'Cleaning', description: 'Teeth cleaning', price: 120 },
+                    { id: 2, name: 'Whitening', description: 'Teeth whitening', price: 200 },
+                    { id: 3, name: 'Filling', description: 'Cavity filling', price: 150 },
+                ],
+                feedbacks: [
+                    { id: 1, patient: 'John Doe', rating: '⭐⭐⭐⭐', comment: 'Great service!' },
+                    { id: 2, patient: 'Jane Smith', rating: '⭐⭐⭐', comment: 'Good experience.' },
+                ],
+                init() {
+                    // Example: Live stats simulation
+                    setInterval(() => {
+                        this.stats.appointments = Math.floor(Math.random() * 10) + 1;
+                        this.stats.newPatients = Math.floor(Math.random() * 5) + 1;
+                    }, 5000);
+                },
+                updateStatus(appt, status) {
+                    appt.status = status;
+                },
+                quickAction(action) {
+                    alert("Action: " + action);
+                },
+                exportReport(type) {
+                    alert("Exporting: " + type);
+                }
+            }
+        }
+    </script>
 
 </body>
 
