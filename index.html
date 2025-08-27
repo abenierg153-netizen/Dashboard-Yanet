@@ -1,14 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" x-data="dashboardApp()">
+<html lang="en" x-data="{ activeSection: 'dashboard', viewMode: 'grid' }">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yanet Dental Clinic Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@1.7.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100">
@@ -21,287 +20,153 @@
                 <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-gray-600 hover:text-blue-600">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="text-gray-600 hover:text-blue-600">
-                    <i class="fas fa-user-circle"></i>
-                </button>
+                <button class="text-gray-600 hover:text-blue-600">🔔</button>
+                <button class="text-gray-600 hover:text-blue-600">👤</button>
             </div>
         </div>
     </header>
 
-    <!-- Bottom Sticky Menu -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden z-50">
+    <!-- Sticky Bottom Menu -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden">
         <div class="flex justify-around">
-            <button @click="activeTab='dashboard'" :class="activeTab==='dashboard'?'text-blue-600 font-bold':'text-gray-600'">Dashboard</button>
-            <button @click="activeTab='appointments'" :class="activeTab==='appointments'?'text-blue-600 font-bold':'text-gray-600'">Appointments</button>
-            <button @click="activeTab='patients'" :class="activeTab==='patients'?'text-blue-600 font-bold':'text-gray-600'">Patients</button>
-            <button @click="activeTab='reports'" :class="activeTab==='reports'?'text-blue-600 font-bold':'text-gray-600'">Reports</button>
-            <button @click="activeTab='settings'" :class="activeTab==='settings'?'text-blue-600 font-bold':'text-gray-600'">Settings</button>
-            <button @click="activeTab='services'" :class="activeTab==='services'?'text-blue-600 font-bold':'text-gray-600'">Service</button>
-            <button @click="activeTab='feedback'" :class="activeTab==='feedback'?'text-blue-600 font-bold':'text-gray-600'">Feedback</button>
+            <button @click="activeSection='dashboard'" :class="activeSection==='dashboard'?'text-blue-600 font-bold':'text-gray-600'">Dashboard</button>
+            <button @click="activeSection='appointments'" :class="activeSection==='appointments'?'text-blue-600 font-bold':'text-gray-600'">Appointments</button>
+            <button @click="activeSection='patients'" :class="activeSection==='patients'?'text-blue-600 font-bold':'text-gray-600'">Patients</button>
+            <button @click="activeSection='reports'" :class="activeSection==='reports'?'text-blue-600 font-bold':'text-gray-600'">Reports</button>
+            <button @click="activeSection='settings'" :class="activeSection==='settings'?'text-blue-600 font-bold':'text-gray-600'">Settings</button>
+            <button @click="activeSection='service'" :class="activeSection==='service'?'text-blue-600 font-bold':'text-gray-600'">Service</button>
+            <button @click="activeSection='feedback'" :class="activeSection==='feedback'?'text-blue-600 font-bold':'text-gray-600'">Feedback</button>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <main class="container mx-auto p-4">
-
-        <!-- Dashboard Tab -->
-        <section x-show="activeTab==='dashboard'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Dashboard Overview</h2>
-
-            <!-- Live Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold">Appointments Today</h3>
-                    <p class="text-2xl" x-text="stats.appointments"></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold">New Patients Today</h3>
-                    <p class="text-2xl" x-text="stats.newPatients"></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold">Happy Patients</h3>
-                    <p class="text-2xl" x-text="stats.happyPatients"></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="text-lg font-semibold">Upcoming Appointments</h3>
-                    <ul class="text-sm space-y-1">
-                        <template x-for="appt in upcomingAppointments" :key="appt.time">
-                            <li x-text="`${appt.name} - ${appt.time}`"></li>
-                        </template>
-                    </ul>
-                </div>
+    <!-- Dashboard Section -->
+    <section x-show="activeSection==='dashboard'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Dashboard Overview</h2>
+        <!-- Live Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">Appointments Today</h3>
+                <p class="text-2xl" hx-get="/api/appointments/today" hx-trigger="load" hx-target="#appt-today">5</p>
             </div>
-
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold mb-2">Weekly Appointments</h3>
-                    <canvas id="appointmentsChart"></canvas>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold mb-2">Patient Growth</h3>
-                    <canvas id="patientsChart"></canvas>
-                </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">New Patients Today</h3>
+                <p class="text-2xl" hx-get="/api/patients/new" hx-trigger="load" hx-target="#new-patients">3</p>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button class="bg-blue-600 text-white p-4 rounded-lg shadow hover:shadow-md">Confirm Appointment</button>
-                <button class="bg-green-600 text-white p-4 rounded-lg shadow hover:shadow-md">Call Patient</button>
-                <button class="bg-purple-600 text-white p-4 rounded-lg shadow hover:shadow-md">View Reports</button>
-                <button class="bg-yellow-500 text-white p-4 rounded-lg shadow hover:shadow-md">Export CSV</button>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">High-Demand Services</h3>
+                <ul hx-get="/api/services/high-demand" hx-trigger="load" hx-target="#high-demand">
+                    <li>Cleaning</li>
+                    <li>Whitening</li>
+                </ul>
             </div>
-        </section>
-
-        <!-- Appointments Tab -->
-        <section x-show="activeTab==='appointments'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Appointments</h2>
-
-            <!-- Filters -->
-            <div class="flex space-x-2 mb-4">
-                <button @click="filter='daily'" :class="filter==='daily'?'bg-blue-600 text-white':'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded">Daily</button>
-                <button @click="filter='weekly'" :class="filter==='weekly'?'bg-blue-600 text-white':'bg-gray-200 text-gray-700'" class="px-4 py-2 rounded">Weekly</button>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">No-Show Predictions</h3>
+                <p hx-get="/api/appointments/no-shows" hx-trigger="load" hx-target="#no-shows">2 potential</p>
             </div>
+        </div>
+    </section>
 
-            <!-- Appointments Table -->
-            <div class="overflow-x-auto bg-white rounded-lg shadow">
-                <table class="min-w-full">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="border px-4 py-2">Time</th>
-                            <th class="border px-4 py-2">Patient Name</th>
-                            <th class="border px-4 py-2">Service</th>
-                            <th class="border px-4 py-2">Status</th>
-                            <th class="border px-4 py-2">Dentist</th>
-                            <th class="border px-4 py-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <template x-for="appt in filteredAppointments" :key="appt.id">
-                            <tr class="hover:bg-gray-50">
-                                <td class="border px-4 py-2" x-text="appt.time"></td>
-                                <td class="border px-4 py-2" x-text="appt.name"></td>
-                                <td class="border px-4 py-2" x-text="appt.service"></td>
-                                <td class="border px-4 py-2" :class="appt.status==='Confirmed'?'text-green-600':'text-red-600'" x-text="appt.status"></td>
-                                <td class="border px-4 py-2" x-text="appt.dentist"></td>
-                                <td class="border px-4 py-2 space-x-2">
-                                    <button class="text-blue-600">Confirm</button>
-                                    <button class="text-red-600">Cancel</button>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
+    <!-- Appointments Section -->
+    <section x-show="activeSection==='appointments'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Appointments</h2>
+        <!-- Quick Action Buttons -->
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Confirm All</button>
+            <button class="bg-red-600 text-white px-4 py-2 rounded">Cancel Selected</button>
+            <button class="bg-green-600 text-white px-4 py-2 rounded">Call Patient</button>
+        </div>
+        <!-- Appointment Table -->
+        <div class="bg-white shadow rounded overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-2">Time</th>
+                        <th class="px-4 py-2">Patient</th>
+                        <th class="px-4 py-2">Service</th>
+                        <th class="px-4 py-2">Status</th>
+                        <th class="px-4 py-2">Dentist</th>
+                        <th class="px-4 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody hx-get="/api/appointments" hx-trigger="load" hx-target="#appointments-body" id="appointments-body">
+                    <tr>
+                        <td class="border px-4 py-2">10:00 AM</td>
+                        <td class="border px-4 py-2">John Doe</td>
+                        <td class="border px-4 py-2">Cleaning</td>
+                        <td class="border px-4 py-2 text-green-500">Confirmed</td>
+                        <td class="border px-4 py-2">Dr. Smith</td>
+                        <td class="border px-4 py-2 flex gap-2">
+                            <button class="text-blue-600">Confirm</button>
+                            <button class="text-red-600">Cancel</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Patients Section -->
+    <section x-show="activeSection==='patients'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Patients</h2>
+        <div class="bg-white shadow rounded p-4">
+            <h3 class="font-semibold">Total Patients</h3>
+            <p class="text-2xl" hx-get="/api/patients/count" hx-trigger="load" hx-target="#total-patients">150</p>
+            <h3 class="font-semibold mt-4">New vs Returning</h3>
+            <div class="h-32 bg-gray-200 mt-2"></div>
+        </div>
+    </section>
+
+    <!-- Reports Section -->
+    <section x-show="activeSection==='reports'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Reports</h2>
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Appointments</button>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Patients</button>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Feedback</button>
+        </div>
+        <div class="bg-white shadow rounded p-4 h-64">
+            <p class="text-gray-500">Reports chart placeholder</p>
+        </div>
+    </section>
+
+    <!-- Settings Section -->
+    <section x-show="activeSection==='settings'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Settings</h2>
+        <div class="bg-white shadow rounded p-4">
+            <h3 class="font-semibold">Clinic Info</h3>
+            <p>Address: 123 Dental St.</p>
+            <p>Contact: (123) 456-7890</p>
+            <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
+
+            <h3 class="font-semibold mt-4">Staff Performance</h3>
+            <div class="h-32 bg-gray-200 mt-2"></div>
+        </div>
+    </section>
+
+    <!-- Service Section -->
+    <section x-show="activeSection==='service'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Services</h2>
+        <div class="flex flex-wrap gap-2 mb-4">
+            <button class="bg-green-600 text-white px-4 py-2 rounded">Add Service</button>
+            <button class="bg-gray-200 px-4 py-2 rounded">Toggle Grid/List</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white shadow rounded p-4">
+                <h3 class="font-semibold">Cleaning</h3>
+                <p>Price: $120</p>
+                <p>Duration: 60 min</p>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <!-- Patients Tab -->
-        <section x-show="activeTab==='patients'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Patients</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">Total Patients</h3>
-                    <p class="text-2xl" x-text="stats.totalPatients"></p>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold">New vs Returning</h3>
-                    <div class="h-32 bg-gray-200"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Reports Tab -->
-        <section x-show="activeTab==='reports'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Reports</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold mb-2">Appointments Report</h3>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded">Download CSV</button>
-                </div>
-                <div class="bg-white p-4 rounded-lg shadow">
-                    <h3 class="font-semibold mb-2">Patients Report</h3>
-                    <button class="bg-green-600 text-white px-4 py-2 rounded">Download PDF</button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Settings Tab -->
-        <section x-show="activeTab==='settings'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Settings</h2>
-            <div class="bg-white p-4 rounded-lg shadow space-y-4">
-                <div>
-                    <h3 class="font-semibold">Clinic Info</h3>
-                    <p>Address: 123 Dental St.</p>
-                    <p>Contact: (123) 456-7890</p>
-                    <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
-                </div>
-                <div>
-                    <h3 class="font-semibold">Staff Performance</h3>
-                    <div class="h-32 bg-gray-200"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- Services Tab -->
-        <section x-show="activeTab==='services'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Services</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <template x-for="service in services" :key="service.id">
-                    <div class="bg-white p-4 rounded-lg shadow">
-                        <h3 class="font-semibold" x-text="service.name"></h3>
-                        <p x-text="service.description"></p>
-                        <p class="text-green-600 font-bold" x-text="`$${service.price}`"></p>
-                    </div>
-                </template>
-            </div>
-        </section>
-
-        <!-- Feedback Tab -->
-        <section x-show="activeTab==='feedback'" class="space-y-6">
-            <h2 class="text-2xl font-bold mb-4">Feedback</h2>
-            <div class="bg-white p-4 rounded-lg shadow space-y-2">
-                <template x-for="fb in feedback" :key="fb.id">
-                    <p x-text="`${fb.name} - ${fb.rating}⭐ - ${fb.comment}`"></p>
-                </template>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Alpine.js Data -->
-    <script>
-        function dashboardApp() {
-            return {
-                activeTab: 'dashboard',
-                filter: 'daily',
-                stats: {
-                    appointments: 5,
-                    newPatients: 3,
-                    happyPatients: 120,
-                    totalPatients: 150
-                },
-                upcomingAppointments: [
-                    { name: 'John Doe', time: '10:00 AM' },
-                    { name: 'Jane Smith', time: '11:30 AM' },
-                    { name: 'Mark Wilson', time: '1:00 PM' }
-                ],
-                appointments: [
-                    { id: 1, time: '10:00 AM', name: 'John Doe', service: 'Cleaning', status: 'Confirmed', dentist: 'Dr. Smith' },
-                    { id: 2, time: '11:30 AM', name: 'Jane Smith', service: 'Filling', status: 'Pending', dentist: 'Dr. Adams' },
-                    { id: 3, time: '1:00 PM', name: 'Mark Wilson', service: 'Cleaning', status: 'Confirmed', dentist: 'Dr. Smith' },
-                ],
-                services: [
-                    { id: 1, name: 'Cleaning', description: 'Teeth cleaning', price: 120 },
-                    { id: 2, name: 'Filling', description: 'Cavity filling', price: 150 },
-                    { id: 3, name: 'Whitening', description: 'Teeth whitening', price: 200 }
-                ],
-                feedback: [
-                    { id: 1, name: 'John Doe', rating: 5, comment: 'Excellent service!' },
-                    { id: 2, name: 'Jane Smith', rating: 4, comment: 'Very good experience.' }
-                ],
-                get filteredAppointments() {
-                    if (this.filter === 'daily') return this.appointments;
-                    else return this.appointments.filter(a => a.time >= '12:00 PM'); // example weekly filter
-                },
-                init() {
-                    // Charts
-                    const ctxA = document.getElementById('appointmentsChart').getContext('2d');
-                    new Chart(ctxA, {
-                        type: 'line',
-                        data: {
-                            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-                            datasets: [{
-                                label: 'Appointments',
-                                data: [5, 7, 4, 6, 8, 5, 7],
-                                borderColor: 'rgba(59, 130, 246, 1)',
-                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
-                                fill: true,
-                                tension: 0.4
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { mode: 'index', intersect: false }
-                            },
-                            scales: {
-                                y: { beginAtZero: true, stepSize: 1 },
-                            }
-                        }
-                    });
-
-                    const ctxP = document.getElementById('patientsChart').getContext('2d');
-                    new Chart(ctxP, {
-                        type: 'bar',
-                        data: {
-                            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                            datasets: [{
-                                label: 'New Patients',
-                                data: [10, 12, 8, 15, 9, 14, 11],
-                                backgroundColor: 'rgba(16, 185, 129, 0.7)',
-                                borderColor: 'rgba(16, 185, 129, 1)',
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            plugins: {
-                                legend: { display: false },
-                                tooltip: { mode: 'index', intersect: false }
-                            },
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                }
-            }
-        }
-    </script>
+    <!-- Feedback Section -->
+    <section x-show="activeSection==='feedback'" class="container mx-auto p-4">
+        <h2 class="text-2xl font-bold mb-4">Feedback</h2>
+        <ul class="bg-white shadow rounded p-4">
+            <li class="border-b py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
+            <li class="border-b py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
+        </ul>
+    </section>
 
 </body>
 </html>
