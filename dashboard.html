@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Clinic Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+  <!-- Top Navbar -->
+  <nav class="bg-white shadow p-4 flex justify-between items-center fixed w-full top-0 left-0 z-50">
+    <h1 class="text-xl font-bold text-gray-800">Clinic Admin Dashboard</h1>
+  </nav>
+
+  <!-- Page Content -->
+  <div class="pt-20 max-w-4xl mx-auto p-4 space-y-6">
+
+    <!-- Module Buttons -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+      
+      <a href="appointments.html" class="flex flex-col items-center justify-center p-6 bg-blue-500 text-white rounded shadow hover:bg-blue-600 transition">
+        <span class="text-lg font-semibold">Appointments</span>
+        <span class="text-sm mt-1">Manage Today's and Upcoming</span>
+      </a>
+
+      <a href="patients.html" class="flex flex-col items-center justify-center p-6 bg-green-500 text-white rounded shadow hover:bg-green-600 transition">
+        <span class="text-lg font-semibold">Patients</span>
+        <span class="text-sm mt-1">View & Manage Patient Records</span>
+      </a>
+
+      <a href="reports.html" class="flex flex-col items-center justify-center p-6 bg-purple-500 text-white rounded shadow hover:bg-purple-600 transition">
+        <span class="text-lg font-semibold">Reports</span>
+        <span class="text-sm mt-1">Financial & Appointment Insights</span>
+      </a>
+
+      <a href="feedback.html" class="flex flex-col items-center justify-center p-6 bg-yellow-500 text-white rounded shadow hover:bg-yellow-600 transition">
+        <span class="text-lg font-semibold">Feedback</span>
+        <span class="text-sm mt-1">Patient Comments & Reviews</span>
+      </a>
+
+      <a href="services.html" class="flex flex-col items-center justify-center p-6 bg-indigo-500 text-white rounded shadow hover:bg-indigo-600 transition">
+        <span class="text-lg font-semibold">Services</span>
+        <span class="text-sm mt-1">Manage Offered Treatments</span>
+      </a>
+
+      <a href="settings.html" class="flex flex-col items-center justify-center p-6 bg-gray-700 text-white rounded shadow hover:bg-gray-800 transition">
+        <span class="text-lg font-semibold">Settings</span>
+        <span class="text-sm mt-1">App Configuration & Users</span>
+      </a>
+
+    </div>
+
+  </div>
+
+</body>
+</html>
