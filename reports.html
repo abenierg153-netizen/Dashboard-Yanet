@@ -73,10 +73,18 @@
         <table class="min-w-full bg-white">
           <thead>
             <tr class="bg-gray-200 text-gray-700">
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('campaign')">Campaign</th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('leads')">Leads</th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('conversions')">Conversions</th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('revenue')">Revenue</th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('campaign')">
+                Campaign <span id="arrow-campaign"></span>
+              </th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('leads')">
+                Leads <span id="arrow-leads"></span>
+              </th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('conversions')">
+                Conversions <span id="arrow-conversions"></span>
+              </th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('revenue')">
+                Revenue <span id="arrow-revenue"></span>
+              </th>
             </tr>
           </thead>
           <tbody id="marketing-table-body"></tbody>
@@ -129,10 +137,21 @@
       marketingRevenueEl.innerText = `$${totalRevenue}`;
     }
 
-    // Sort marketing table
+    // Sort marketing table with arrows
     function sortMarketing(column) {
       marketingSortDirection[column] = marketingSortDirection[column] === 'asc' ? 'desc' : 'asc';
 
+      // Reset all arrows
+      ['campaign','leads','conversions','revenue'].forEach(col => {
+        const el = document.getElementById(`arrow-${col}`);
+        if(el) el.innerText = '';
+      });
+
+      // Set arrow for current column
+      const arrowEl = document.getElementById(`arrow-${column}`);
+      if(arrowEl) arrowEl.innerText = marketingSortDirection[column] === 'asc' ? '↑' : '↓';
+
+      // Sort data
       marketingData.sort((a, b) => {
         let valA = a[column];
         let valB = b[column];
