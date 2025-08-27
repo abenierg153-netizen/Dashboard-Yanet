@@ -2,90 +2,173 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Reports - Clinic Admin</title>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.34.0/dist/supabase.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports | Yanet Dental Clinic</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
 
-  <!-- Header -->
-  <header class="bg-white shadow sticky top-0 z-50">
-    <div class="max-w-2xl mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="index.html" class="text-gray-600 hover:text-blue-600 flex items-center">← Back</a>
-      <h1 class="text-lg font-bold text-gray-800">Reports & Analytics</h1>
-      <div></div>
-    </div>
-  </header>
+  <div class="container mx-auto p-4">
 
-  <!-- Reports Section -->
-  <div x-data="reportsApp()" x-init="init()" class="max-w-2xl mx-auto px-4 py-6">
-
-    <!-- Summary Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <h3 class="text-gray-500 text-xs">Total Appointments</h3>
-        <p class="text-xl font-bold text-blue-600" x-text="appointments.length"></p>
+    <!-- Totals Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Appointments</h2>
+        <p id="total-appointments" class="text-3xl font-bold mt-2">0</p>
       </div>
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <h3 class="text-gray-500 text-xs">Total Patients</h3>
-        <p class="text-xl font-bold text-green-600" x-text="patients.length"></p>
-      </div>
-      <div class="bg-white rounded-xl shadow p-4 text-center">
-        <h3 class="text-gray-500 text-xs">Marketing Requests</h3>
-        <p class="text-xl font-bold text-purple-600" x-text="marketing.length"></p>
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Patients</h2>
+        <p id="total-patients" class="text-3xl font-bold mt-2">0</p>
       </div>
     </div>
 
-    <!-- Tabs -->
-    <div class="flex border-b mb-6 space-x-6 text-gray-600 text-sm">
-      <button @click="activeTab = 'appointments'" 
-              :class="activeTab==='appointments' ? 'text-blue-600 border-b-2 border-blue-600' : ''"
-              class="pb-2">Appointments</button>
-      <button @click="activeTab = 'patients'" 
-              :class="activeTab==='patients' ? 'text-blue-600 border-b-2 border-blue-600' : ''"
-              class="pb-2">Patients</button>
-      <button @click="activeTab = 'marketing'" 
-              :class="activeTab==='marketing' ? 'text-blue-600 border-b-2 border-blue-600' : ''"
-              class="pb-2">Marketing</button>
+    <!-- Totals Bar Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Overall Totals</h2>
+      <canvas id="totalsBarChart" height="100"></canvas>
     </div>
 
-    <!-- Appointments Chart -->
-    <div x-show="activeTab === 'appointments'" class="space-y-6">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-md font-semibold mb-4">Appointments by Status</h2>
-        <div class="h-64">
-          <canvas id="appointmentsChart"></canvas>
+    <!-- Monthly Growth Line Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Monthly Growth (Last 6 Months)</h2>
+      <canvas id="monthlyGrowthChart" height="100"></canvas>
+    </div>
+
+    <!-- Marketing Section -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Marketing</h2>
+      
+      <!-- Marketing Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="bg-blue-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Leads</p>
+          <p id="marketing-leads" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Conversions</p>
+          <p id="marketing-conversions" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Revenue</p>
+          <p id="marketing-revenue" class="text-2xl font-bold mt-2">$0</p>
         </div>
       </div>
-    </div>
 
-    <!-- Patients Chart -->
-    <div x-show="activeTab === 'patients'" class="space-y-6">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-md font-semibold mb-4">New Patients by Month</h2>
-        <div class="h-64">
-          <canvas id="patientsChart"></canvas>
-        </div>
-      </div>
-    </div>
-
-    <!-- Marketing Chart -->
-    <div x-show="activeTab === 'marketing'" class="space-y-6">
-      <div class="bg-white p-4 rounded-xl shadow">
-        <h2 class="text-md font-semibold mb-4">Marketing Requests</h2>
-        <div class="h-64">
-          <canvas id="marketingChart"></canvas>
-        </div>
+      <!-- Marketing Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead>
+            <tr class="bg-gray-200 text-gray-700">
+              <th class="py-2 px-4 text-left">Campaign</th>
+              <th class="py-2 px-4 text-left">Leads</th>
+              <th class="py-2 px-4 text-left">Conversions</th>
+              <th class="py-2 px-4 text-left">Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="marketing-table-body"></tbody>
+        </table>
       </div>
     </div>
 
   </div>
 
-  <!-- Script stays the same as before -->
   <script>
-    // ... same reportsApp() function with Supabase + Chart.js logic
+    // Initial variables
+    let totalAppointments = 0;
+    let totalPatients = 0;
+    let monthlyGrowthData = [];
+    let marketingData = [];
+
+    const totalAppointmentsEl = document.getElementById('total-appointments');
+    const totalPatientsEl = document.getElementById('total-patients');
+    const marketingTableBody = document.getElementById('marketing-table-body');
+    const marketingLeadsEl = document.getElementById('marketing-leads');
+    const marketingConversionsEl = document.getElementById('marketing-conversions');
+    const marketingRevenueEl = document.getElementById('marketing-revenue');
+
+    function updateTotalsDisplay() {
+      totalAppointmentsEl.innerText = totalAppointments;
+      totalPatientsEl.innerText = totalPatients;
+    }
+
+    function updateMarketingDisplay() {
+      marketingTableBody.innerHTML = '';
+      marketingData.forEach(item => {
+        const row = `<tr class="border-b">
+          <td class="py-2 px-4">${item.campaign}</td>
+          <td class="py-2 px-4">${item.leads}</td>
+          <td class="py-2 px-4">${item.conversions}</td>
+          <td class="py-2 px-4">$${item.revenue}</td>
+        </tr>`;
+        marketingTableBody.innerHTML += row;
+      });
+
+      const totalLeads = marketingData.reduce((sum, item) => sum + item.leads, 0);
+      const totalConversions = marketingData.reduce((sum, item) => sum + item.conversions, 0);
+      const totalRevenue = marketingData.reduce((sum, item) => sum + item.revenue, 0);
+
+      marketingLeadsEl.innerText = totalLeads;
+      marketingConversionsEl.innerText = totalConversions;
+      marketingRevenueEl.innerText = `$${totalRevenue}`;
+    }
+
+    // Charts
+    const totalsCtx = document.getElementById('totalsBarChart').getContext('2d');
+    const totalsChart = new Chart(totalsCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Appointments', 'Patients'],
+        datasets: [{ label: 'Total', data: [0,0], backgroundColor: ['#3B82F6', '#10B981'] }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const monthlyGrowthCtx = document.getElementById('monthlyGrowthChart').getContext('2d');
+    const monthlyGrowthChart = new Chart(monthlyGrowthCtx, {
+      type: 'line',
+      data: { labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], datasets: [{ label: 'Appointments', data: [], borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.4, fill: true }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    function refreshCharts() {
+      totalsChart.data.datasets[0].data = [totalAppointments, totalPatients];
+      totalsChart.update();
+
+      monthlyGrowthChart.data.datasets[0].data = monthlyGrowthData;
+      monthlyGrowthChart.update();
+    }
+
+    // Fetch data from backend
+    async function fetchAndUpdateReports() {
+      try {
+        const response = await fetch('/api/reports'); // Replace with your API endpoint
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+
+        // Update variables
+        totalAppointments = data.totals.appointments;
+        totalPatients = data.totals.patients;
+        monthlyGrowthData = data.monthlyGrowth;
+        marketingData = data.marketing;
+
+        // Update UI
+        updateTotalsDisplay();
+        updateMarketingDisplay();
+        refreshCharts();
+
+      } catch (error) {
+        console.error('Error fetching report data:', error);
+      }
+    }
+
+    // Initial fetch
+    fetchAndUpdateReports();
+
+    // Optional: auto-refresh every 1 minute
+    setInterval(fetchAndUpdateReports, 60000);
   </script>
+
 </body>
 </html>
