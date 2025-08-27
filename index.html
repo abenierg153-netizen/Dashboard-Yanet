@@ -1,125 +1,165 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="dashboardData()">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Luxe Beauty Spa | Premium Wellness Experience</title>
-    <!-- Alpine.js -->
+    <title>Yanet Dental Clinic Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.9.2"></script>
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.3.2/dist/tailwind.min.css" rel="stylesheet">
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap');
-        
-        :root {
-            --primary: #3B82F6;
-            --primary-dark: #2563EB;
-            --secondary: #F59E0B;
-            --light: #F3F4F6;
-            --dark: #1F2937;
+    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gray-100">
+
+    <!-- Header -->
+    <header class="bg-white shadow">
+        <div class="container mx-auto flex justify-between items-center p-4">
+            <div class="flex items-center">
+                <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
+                <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="text-gray-600 hover:text-blue-600">🔔</button>
+                <button class="text-gray-600 hover:text-blue-600">👤</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Quick Summary Cards -->
+    <section class="container mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h2 class="text-lg font-semibold">Appointments Today</h2>
+            <p class="text-2xl" x-text="summary.todayAppointments"></p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h2 class="text-lg font-semibold">Revenue Today</h2>
+            <p class="text-2xl" x-text="summary.todayRevenue"></p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h2 class="text-lg font-semibold">New Patients Today</h2>
+            <p class="text-2xl" x-text="summary.newPatients"></p>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h2 class="text-lg font-semibold">Upcoming Appointments</h2>
+            <ul>
+                <template x-for="appt in upcomingAppointments" :key="appt.id">
+                    <li x-text="`${appt.name} - ${appt.time}`"></li>
+                </template>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Charts Section -->
+    <section class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Revenue Chart</h3>
+            <canvas id="revenueChart" class="h-32"></canvas>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Appointments Chart</h3>
+            <canvas id="appointmentsChart" class="h-32"></canvas>
+        </div>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold mb-2">Patient Growth</h3>
+            <canvas id="patientChart" class="h-32"></canvas>
+        </div>
+    </section>
+
+    <!-- Appointments Section with htmx -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Appointments</h2>
+        <div class="flex justify-between mb-4">
+            <button @click="view='daily'" :class="view=='daily'? 'bg-blue-600 text-white':'bg-gray-200'" class="px-4 py-2 rounded">Daily</button>
+            <button @click="view='weekly'" :class="view=='weekly'? 'bg-blue-600 text-white':'bg-gray-200'" class="px-4 py-2 rounded">Weekly</button>
+        </div>
+        <div hx-get="/appointments?view=daily" hx-trigger="load" hx-target="#appointmentsTable" hx-swap="innerHTML">
+            <table class="min-w-full bg-white border">
+                <thead>
+                    <tr>
+                        <th class="border px-4 py-2">Time</th>
+                        <th class="border px-4 py-2">Patient Name</th>
+                        <th class="border px-4 py-2">Service</th>
+                        <th class="border px-4 py-2">Status</th>
+                        <th class="border px-4 py-2">Dentist</th>
+                        <th class="border px-4 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="appointmentsTable">
+                    <!-- Live appointments via htmx -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Floating Add Appointment Button -->
+    <button @click="openModal=true" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition">+ New Appointment</button>
+
+    <!-- Modal -->
+    <div x-show="openModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-6 rounded shadow-lg w-96">
+            <h3 class="font-semibold mb-4">Add New Appointment</h3>
+            <input type="text" placeholder="Patient Name" class="w-full border p-2 rounded mb-2" x-model="newAppt.name">
+            <input type="time" class="w-full border p-2 rounded mb-2" x-model="newAppt.time">
+            <input type="text" placeholder="Service" class="w-full border p-2 rounded mb-2" x-model="newAppt.service">
+            <div class="flex justify-end space-x-2">
+                <button @click="openModal=false" class="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                <button @click="addAppointment()" class="px-4 py-2 rounded bg-blue-600 text-white">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function dashboardData() {
+            return {
+                summary: {
+                    todayAppointments: 5,
+                    todayRevenue: "$1,200",
+                    newPatients: 3
+                },
+                upcomingAppointments: [
+                    { id: 1, name: 'John Doe', time: '10:00 AM' },
+                    { id: 2, name: 'Jane Smith', time: '11:30 AM' }
+                ],
+                openModal: false,
+                newAppt: { name: '', time: '', service: '' },
+                view: 'daily',
+                addAppointment() {
+                    if(this.newAppt.name && this.newAppt.time){
+                        this.upcomingAppointments.push({...this.newAppt, id: Date.now()});
+                        this.newAppt = { name: '', time: '', service: '' };
+                        this.openModal = false;
+                    }
+                }
+            }
         }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            color: var(--dark);
-            scroll-behavior: smooth;
-        }
-        
-        h1, h2, h3, h4, h5 {
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .btn-primary {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
-        }
-        
-        .btn-primary:hover {
-            background-color: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 8px rgba(59, 130, 246, 0.4);
-        }
-        
-        .btn-secondary {
-            background-color: white;
-            color: var(--primary);
-            border: 2px solid var(--primary);
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-        
-        .btn-secondary:hover {
-            background-color: var(--primary);
-            color: white;
-        }
-        
-        .sticky-menu {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background-color: white;
-            border-top: 1px solid #e5e7eb;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-            display: flex;
-            justify-content: space-around;
-            padding: 0.75rem 0;
-            z-index: 1000;
-        }
-        
-        .menu-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0.5rem;
-            color: #6b7280;
-            font-size: 0.75rem;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            border-radius: 0.5rem;
-        }
-        
-        .menu-item:hover, .menu-item.active {
-            color: var(--primary);
-            background-color: #eff6ff;
-        }
-        
-        .menu-item span:first-child {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-        
-        .hero-bg {
-            background: linear-gradient(rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.9)), url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?ixlib=rb-4.0.3&auto=format&fit=crop&w=1770&q=80') center/cover no-repeat;
-        }
-        
-        .service-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .service-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-        }
-        
-        .service-image {
-            height: 12rem;
-            background-size: cover;
-            background-position: center;
-        }
-        
-        .testimonial-card {
-            background-color: white;
-            border-radiu
+
+        // Chart.js Setup
+        const revenueChart = new Chart(document.getElementById('revenueChart'), {
+            type: 'line',
+            data: {
+                labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                datasets: [{ label: 'Revenue', data: [1200, 1500, 1000, 1800, 2000, 2200, 1700], backgroundColor:'rgba(59,130,246,0.2)', borderColor:'#3b82f6', borderWidth:2 }]
+            }
+        });
+
+        const appointmentsChart = new Chart(document.getElementById('appointmentsChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+                datasets: [{ label: 'Appointments', data: [5,7,6,8,5,9,4], backgroundColor:'#10b981' }]
+            }
+        });
+
+        const patientChart = new Chart(document.getElementById('patientChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+                datasets: [{ label: 'New Patients', data: [10,12,9,15,14,18,20], backgroundColor:'rgba(236,72,153,0.2)', borderColor:'#ec4899', borderWidth:2 }]
+            }
+        });
+    </script>
+</body>
+
+</html>
