@@ -31,15 +31,17 @@
     </div>
   </div>
 </header>
-<!-- Horizontal Scrollable Dental Cards -->
+<!-- Dental Cards Grid -->
 <div class="max-w-4xl mx-auto px-4 py-4">
   <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
-  <div class="flex space-x-4 overflow-x-auto pb-2">
+  
+  <!-- Use grid instead of flex -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
     
     <!-- Dashboard Card -->
     <div @click="activeSection = 'dashboard'" 
          :class="activeSection === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-chart-line text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Dashboard</span>
     </div>
@@ -47,7 +49,7 @@
     <!-- Appointments Card -->
     <div @click="activeSection = 'appointments'" 
          :class="activeSection === 'appointments' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-calendar-alt text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Appointments</span>
     </div>
@@ -55,7 +57,7 @@
     <!-- Patients Card -->
     <div @click="activeSection = 'patients'" 
          :class="activeSection === 'patients' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-users text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Patients</span>
     </div>
@@ -63,7 +65,7 @@
     <!-- Billing Card -->
     <div @click="activeSection = 'billing'" 
          :class="activeSection === 'billing' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-file-invoice-dollar text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Billing</span>
     </div>
@@ -71,7 +73,7 @@
     <!-- Reports Card -->
     <div @click="activeSection = 'reports'" 
          :class="activeSection === 'reports' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-chart-pie text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Reports</span>
     </div>
@@ -79,7 +81,7 @@
     <!-- Settings Card -->
     <div @click="activeSection = 'settings'" 
          :class="activeSection === 'settings' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-cog text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Settings</span>
     </div>
@@ -87,7 +89,7 @@
     <!-- Support Card -->
     <div @click="activeSection = 'support'" 
          :class="activeSection === 'support' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex-shrink-0 w-40 h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+         class="w-full h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-life-ring text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Support</span>
     </div>
