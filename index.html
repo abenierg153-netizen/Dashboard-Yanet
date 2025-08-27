@@ -1,90 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Abenier Landing</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Abenier Landing Page</title>
+
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Alpine.js for small interactivity -->
-  <script src="https://unpkg.com/alpinejs" defer></script>
+
+  <!-- Alpine.js -->
+  <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+  <!-- htmx -->
+  <script src="https://unpkg.com/htmx.org@1.9.2"></script>
+
+  <!-- Stimulus -->
+  <script src="https://unpkg.com/@hotwired/stimulus/dist/stimulus.umd.js"></script>
 </head>
 <body class="bg-gray-50 text-gray-800">
 
-  <!-- Hero Section -->
-  <section class="text-center py-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-    <h1 class="text-4xl font-bold mb-4">Welcome to Abenier</h1>
-    <p class="mb-6 text-lg">Smart landing pages + chatbots for your business</p>
-    <a href="#contact" class="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow hover:bg-gray-100">
-      Get Started
-    </a>
-  </section>
+<!-- Hero Section -->
+<section class="text-center py-20 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+  <h1 class="text-4xl font-bold mb-4">Welcome to Abenier</h1>
+  <p class="mb-6 text-lg">Landing pages, chatbots, and affiliate systems built fast</p>
+  <a href="#contact" class="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow hover:bg-gray-100">
+    Get Started
+  </a>
+</section>
 
-  <!-- Features Section -->
-  <section class="py-16 max-w-5xl mx-auto px-6">
-    <h2 class="text-2xl font-bold text-center mb-10">Why Choose Us?</h2>
-    <div class="grid gap-8 md:grid-cols-3">
-      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
-        <h3 class="font-semibold text-lg mb-2">🚀 Fast Setup</h3>
-        <p>Launch your landing page in minutes with clean, modern design.</p>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
-        <h3 class="font-semibold text-lg mb-2">🤖 Chatbot Ready</h3>
-        <p>Seamless integration with Telegram or Voiceflow bots.</p>
-      </div>
-      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
-        <h3 class="font-semibold text-lg mb-2">📈 Optimized</h3>
-        <p>Mobile-first design focused on conversion and sales.</p>
-      </div>
+<!-- Features Section -->
+<section class="py-16 max-w-5xl mx-auto px-6">
+  <h2 class="text-2xl font-bold text-center mb-10">Why Choose Us?</h2>
+  <div class="grid gap-8 md:grid-cols-3">
+    <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+      <h3 class="font-semibold text-lg mb-2">🚀 Fast Setup</h3>
+      <p>Launch your landing page in minutes with clean, modern design.</p>
     </div>
-  </section>
-
-  <!-- FAQ Section (with Alpine.js) -->
-  <section class="py-16 bg-gray-100 px-6">
-    <h2 class="text-2xl font-bold text-center mb-10">Frequently Asked Questions</h2>
-    <div class="max-w-2xl mx-auto space-y-4">
-      
-      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
-        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
-          <span>How fast can you deliver?</span>
-          <span x-show="!open">+</span>
-          <span x-show="open">-</span>
-        </button>
-        <p x-show="open" class="mt-2 text-gray-600">Most landing pages are ready within 1–2 days.</p>
-      </div>
-
-      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
-        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
-          <span>Do you integrate chatbots?</span>
-          <span x-show="!open">+</span>
-          <span x-show="open">-</span>
-        </button>
-        <p x-show="open" class="mt-2 text-gray-600">Yes — we connect Telegram, Voiceflow, or ProProfs chat.</p>
-      </div>
-
-      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
-        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
-          <span>Can I update content myself?</span>
-          <span x-show="!open">+</span>
-          <span x-show="open">-</span>
-        </button>
-        <p x-show="open" class="mt-2 text-gray-600">Absolutely. Simple HTML updates, no coding needed.</p>
-      </div>
-
+    <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+      <h3 class="font-semibold text-lg mb-2">🤖 Chatbot Ready</h3>
+      <p>Seamless integration with Telegram, Voiceflow, or ProProfs chat.</p>
     </div>
-  </section>
+    <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+      <h3 class="font-semibold text-lg mb-2">📈 Optimized</h3>
+      <p>Mobile-first design focused on conversions and TikTok-driven sales.</p>
+    </div>
+  </div>
+</section>
 
-  <!-- Contact -->
-  <section id="contact" class="py-16 text-center">
-    <h2 class="text-2xl font-bold mb-6">Start your project today</h2>
-    <a href="https://t.me/yourtelegram" class="bg-blue-600 text-white px-6 py-3 rounded-full shadow hover:bg-blue-700">
-      Contact on Telegram
-    </a>
-  </section>
+<!-- FAQ Section (Alpine.js Interactivity) -->
+<section class="py-16 bg-gray-100 px-6">
+  <h2 class="text-2xl font-bold text-center mb-10">Frequently Asked Questions</h2>
+  <div class="max-w-2xl mx-auto space-y-4">
+    <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+      <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+        <span>How fast can you deliver?</span>
+        <span x-show="!open">+</span>
+        <span x-show="open">-</span>
+      </button>
+      <p x-show="open" class="mt-2 text-gray-600">Most landing pages are ready within 1–2 days.</p>
+    </div>
+    <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+      <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+        <span>Do you integrate chatbots?</span>
+        <span x-show="!open">+</span>
+        <span x-show="open">-</span>
+      </button>
+      <p x-show="open" class="mt-2 text-gray-600">Yes — Telegram, Voiceflow, or ProProfs supported.</p>
+    </div>
+    <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+      <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+        <span>Can I update content myself?</span>
+        <span x-show="!open">+</span>
+        <span x-show="open">-</span>
+      </button>
+      <p x-show="open" class="mt-2 text-gray-600">Absolutely. Simple HTML + Tailwind edits are enough.</p>
+    </div>
+  </div>
+</section>
 
-  <!-- Footer -->
-  <footer class="text-center py-6 bg-gray-200 text-sm">
-    © 2025 Abenier. All rights reserved.
-  </footer>
+<!-- Contact / Newsletter (htmx Example) -->
+<section id="contact" class="py-16 text-center px-6">
+  <h2 class="text-2xl font-bold mb-6">Start Your Project Today</h2>
+  <form hx-post="/submit-form" hx-target="#form-response" class="max-w-md mx-auto space-y-4">
+    <input type="text" name="name" placeholder="Your Name" required
+           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+    <input type="email" name="email" placeholder="Email" required
+           class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+    <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      Submit
+    </button>
+    <div id="form-response" class="text-green-600 mt-2"></div>
+  </form>
+</section>
+
+<!-- Footer -->
+<footer class="text-center py-6 bg-gray-200 text-sm">
+  © 2025 Abenier. All rights reserved.
+</footer>
+
+<!-- Optional Stimulus Controller Example -->
+<script>
+  (() => {
+    const application = Stimulus.Application.start();
+    application.register("example", class extends Stimulus.Controller {
+      connect() { console.log("Stimulus controller active!"); }
+    });
+  })();
+</script>
 
 </body>
 </html>
