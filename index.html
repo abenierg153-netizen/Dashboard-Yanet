@@ -101,3 +101,53 @@
     <div></div> <!-- Empty space -->
   </div>
 </div>
+<div x-data="{ activeTab: 'today', selectedModules: ['appointments','feedback','dashboard'] }" class="p-4">
+
+  <!-- AI Insights -->
+  <div class="mb-4 p-4 bg-blue-50 rounded shadow">
+    <h2 class="font-bold text-lg mb-2">AI Insights</h2>
+    <ul class="list-disc list-inside text-sm text-gray-700">
+      <li>Peak appointments today: 10 AM – 12 PM</li>
+      <li>2 new patients registered this week</li>
+      <li>3 feedbacks need attention</li>
+    </ul>
+  </div>
+
+  <!-- Horizontal Tabs -->
+  <div class="flex space-x-2 border-b mb-2">
+    <button x-on:click="activeTab='today'" :class="activeTab==='today'? 'border-b-2 border-blue-500 font-semibold' : ''">Today</button>
+    <button x-on:click="activeTab='week'" :class="activeTab==='week'? 'border-b-2 border-blue-500 font-semibold' : ''">This Week</button>
+    <button x-on:click="activeTab='month'" :class="activeTab==='month'? 'border-b-2 border-blue-500 font-semibold' : ''">This Month</button>
+  </div>
+
+  <!-- Module Selector -->
+  <div class="flex space-x-4 mb-4">
+    <label><input type="checkbox" value="appointments" x-model="selectedModules"> Appointments</label>
+    <label><input type="checkbox" value="patients" x-model="selectedModules"> Patients</label>
+    <label><input type="checkbox" value="dashboard" x-model="selectedModules"> Dashboard</label>
+    <label><input type="checkbox" value="services" x-model="selectedModules"> Services</label>
+    <label><input type="checkbox" value="reports" x-model="selectedModules"> Reports</label>
+    <label><input type="checkbox" value="feedback" x-model="selectedModules"> Feedback</label>
+  </div>
+
+  <!-- Content Area -->
+  <div class="space-y-4">
+    <div x-show="activeTab==='today' && selectedModules.includes('appointments')" class="p-4 bg-white rounded shadow">
+      <h3 class="font-bold mb-2">Today's Appointments</h3>
+      <!-- htmx content goes here -->
+    </div>
+
+    <div x-show="activeTab==='today' && selectedModules.includes('feedback')" class="p-4 bg-white rounded shadow">
+      <h3 class="font-bold mb-2">Today's Feedback</h3>
+      <!-- htmx content goes here -->
+    </div>
+
+    <div x-show="activeTab==='today' && selectedModules.includes('dashboard')" class="p-4 bg-white rounded shadow">
+      <h3 class="font-bold mb-2">Dashboard Snapshot</h3>
+      <!-- summary cards -->
+    </div>
+
+    <!-- Repeat similar structure for week/month if needed -->
+  </div>
+
+</div>
