@@ -1,202 +1,309 @@
 <!DOCTYPE html>
-<html lang="en" x-data="dashboardApp()">
-
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Yanet Dental Clinic Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yanet Dental Clinic - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
 </head>
-
-<body class="bg-gray-100 font-sans">
-
-  <!-- Sticky Header -->
-  <header class="bg-white shadow sticky top-0 z-50">
-    <div class="container mx-auto flex justify-between items-center p-4">
-      <div class="flex items-center">
-        <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
-        <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
-      </div>
-      <div class="flex items-center space-x-4">
-        <button class="text-gray-600 hover:text-blue-500">🔔</button>
-        <button class="text-gray-600 hover:text-blue-500">👤</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Top Navigation Cards -->
-  <section class="container mx-auto mt-4 px-4">
-    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
-      <template x-for="card in navCards" :key="card.id">
-        <button @click="activeSection = card.id"
-          :class="activeSection === card.id ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'"
-          class="rounded-lg p-4 shadow hover:shadow-lg flex flex-col items-center transition-colors">
-          <span class="text-2xl mb-1" x-text="card.icon"></span>
-          <span class="font-medium text-sm" x-text="card.name"></span>
-          <span class="text-xs mt-1" x-text="card.value"></span>
-        </button>
-      </template>
-    </div>
-  </section>
-
-  <!-- Sections -->
-  <main class="container mx-auto mt-6 px-4 space-y-6">
-    
-    <!-- Dashboard Section -->
-    <section x-show="activeSection === 'dashboard'" class="space-y-4" x-transition>
-      <h2 class="text-xl font-bold">Dashboard Overview</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow p-4">
-          <h3 class="font-semibold">Appointments Today</h3>
-          <p class="text-2xl">5</p>
+<body class="bg-gray-50" x-data="dashboardData()">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tooth text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Yanet Dental Clinic</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-xl"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img class="h-8 w-8 rounded-full" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%233B82F6'/%3E%3Ctext x='16' y='21' text-anchor='middle' fill='white' font-family='Arial' font-size='14' font-weight='bold'%3EDr%3C/text%3E%3C/svg%3E" alt="Profile">
+                        <span class="text-sm font-medium text-gray-700">Dr. Admin</span>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <h3 class="font-semibold">New Patients</h3>
-          <p class="text-2xl">3</p>
+    </header>
+
+    <!-- Navigation Cards -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-16 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                <button @click="activeSection = 'dashboard'" 
+                        :class="activeSection === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-chart-line text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Dashboard</span>
+                </button>
+                <button @click="activeSection = 'appointments'" 
+                        :class="activeSection === 'appointments' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-calendar-alt text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Appointments</span>
+                </button>
+                <button @click="activeSection = 'patients'" 
+                        :class="activeSection === 'patients' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-users text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Patients</span>
+                </button>
+                <button @click="activeSection = 'reports'" 
+                        :class="activeSection === 'reports' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-chart-bar text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Reports</span>
+                </button>
+                <button @click="activeSection = 'settings'" 
+                        :class="activeSection === 'settings' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-cog text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Settings</span>
+                </button>
+                <button @click="activeSection = 'services'" 
+                        :class="activeSection === 'services' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-tooth text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Services</span>
+                </button>
+                <button @click="activeSection = 'feedback'" 
+                        :class="activeSection === 'feedback' ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 hover:bg-blue-100'"
+                        class="flex flex-col items-center p-3 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-star text-lg mb-1"></i>
+                    <span class="text-xs font-medium">Feedback</span>
+                </button>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <h3 class="font-semibold">Upcoming Appointments</h3>
-          <ul class="text-sm mt-2">
-            <li>John Doe - 10:00 AM</li>
-            <li>Jane Smith - 11:30 AM</li>
-            <li>Mark Wilson - 1:00 PM</li>
-          </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Dashboard Section -->
+        <div x-show="activeSection === 'dashboard'" x-transition class="space-y-6">
+            <!-- AI Insights Panel -->
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 rounded-lg p-6 text-white">
+                <div class="flex items-center mb-4">
+                    <i class="fas fa-brain text-2xl mr-3"></i>
+                    <h2 class="text-xl font-bold">AI Insights</h2>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2">High-Demand Services</h3>
+                        <p class="text-sm">Teeth Cleaning (+15% this week), Root Canal (+8% this month)</p>
+                    </div>
+                    <div class="bg-white bg-opacity-20 rounded-lg p-4">
+                        <h3 class="font-semibold mb-2">Potential No-Shows</h3>
+                        <p class="text-sm">3 appointments at risk today. Consider confirmation calls.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-calendar-day text-2xl text-blue-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Today's Appointments</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="stats.todayAppointments"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-user-plus text-2xl text-green-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">New Patients Today</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="stats.newPatients"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-clock text-2xl text-yellow-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Upcoming This Week</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="stats.upcomingWeek"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-dollar-sign text-2xl text-purple-600"></i>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-sm font-medium text-gray-500">Today's Revenue</p>
+                            <p class="text-2xl font-bold text-gray-900" x-text="'$' + stats.todayRevenue"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                    <button class="flex flex-col items-center p-4 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                        <i class="fas fa-plus text-blue-600 text-xl mb-2"></i>
+                        <span class="text-sm font-medium text-blue-600">New Appointment</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
+                        <i class="fas fa-phone text-green-600 text-xl mb-2"></i>
+                        <span class="text-sm font-medium text-green-600">Call Patient</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-yellow-50 hover:bg-yellow-100 rounded-lg transition-colors">
+                        <i class="fas fa-file-invoice text-yellow-600 text-xl mb-2"></i>
+                        <span class="text-sm font-medium text-yellow-600">Generate Invoice</span>
+                    </button>
+                    <button class="flex flex-col items-center p-4 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors">
+                        <i class="fas fa-download text-purple-600 text-xl mb-2"></i>
+                        <span class="text-sm font-medium text-purple-600">Export Data</span>
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Appointments Section -->
-    <section x-show="activeSection === 'appointments'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Appointments</h2>
-      <div class="flex justify-start space-x-2 mb-4">
-        <button class="bg-blue-500 text-white px-4 py-2 rounded">Daily</button>
-        <button class="bg-gray-200 px-4 py-2 rounded">Weekly</button>
-      </div>
-      <div class="overflow-x-auto">
-        <table class="min-w-full bg-white border rounded-lg">
-          <thead>
-            <tr class="bg-gray-50">
-              <th class="border px-4 py-2">Time</th>
-              <th class="border px-4 py-2">Patient</th>
-              <th class="border px-4 py-2">Service</th>
-              <th class="border px-4 py-2">Status</th>
-              <th class="border px-4 py-2">Dentist</th>
-              <th class="border px-4 py-2">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td class="border px-4 py-2">10:00 AM</td>
-              <td class="border px-4 py-2">John Doe</td>
-              <td class="border px-4 py-2">Cleaning</td>
-              <td class="border px-4 py-2 text-green-500">Confirmed</td>
-              <td class="border px-4 py-2">Dr. Smith</td>
-              <td class="border px-4 py-2">
-                <button class="text-blue-600 hover:underline mr-2">Confirm</button>
-                <button class="text-red-600 hover:underline">Cancel</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </section>
-
-    <!-- Patients Section -->
-    <section x-show="activeSection === 'patients'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Patients</h2>
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold">Total Patients</h3>
-        <p class="text-2xl">150</p>
-        <h3 class="font-semibold mt-4">New vs Returning</h3>
-        <div class="h-32 bg-gray-200 rounded mt-2"></div>
-      </div>
-    </section>
-
-    <!-- Reports Section with Chart -->
-    <section x-show="activeSection === 'reports'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Reports</h2>
-      <div class="bg-white p-4 rounded-lg shadow">
-        <canvas id="reportsChart" class="w-full h-64"></canvas>
-      </div>
-    </section>
-
-    <!-- Services Section -->
-    <section x-show="activeSection === 'service'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Services</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <div class="bg-white rounded-lg shadow p-4">
-          <h3 class="font-semibold">Teeth Cleaning</h3>
-          <p class="text-gray-600 mt-1">Duration: 45 min | Price: $50</p>
+        <!-- Appointments Section -->
+        <div x-show="activeSection === 'appointments'" x-transition class="space-y-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-900">Appointments</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dentist</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="appointment in appointments" :key="appointment.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="appointment.time"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="appointment.patient"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="appointment.service"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="appointment.status === 'Confirmed' ? 'bg-green-100 text-green-800' : appointment.status === 'Pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'" 
+                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="appointment.status"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="appointment.dentist"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900 mr-2">Confirm</button>
+                                        <button class="text-red-600 hover:text-red-900">Cancel</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-        <div class="bg-white rounded-lg shadow p-4">
-          <h3 class="font-semibold">Whitening</h3>
-          <p class="text-gray-600 mt-1">Duration: 60 min | Price: $80</p>
+
+        <!-- Patients Section -->
+        <div x-show="activeSection === 'patients'" x-transition class="space-y-6">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h2 class="text-xl font-bold text-gray-900">Patients</h2>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Visit</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <template x-for="patient in patients" :key="patient.id">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="patient.name"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="patient.email"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="patient.phone"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span :class="patient.type === 'New' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800'" 
+                                              class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" x-text="patient.type"></span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" x-text="patient.lastVisit"></td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-blue-600 hover:text-blue-900 mr-2">View</button>
+                                        <button class="text-green-600 hover:text-green-900">Book</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Feedback Section -->
-    <section x-show="activeSection === 'feedback'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Feedback</h2>
-      <ul class="bg-white p-4 rounded-lg shadow divide-y divide-gray-200">
-        <li class="py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
-        <li class="py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
-      </ul>
-    </section>
+        <!-- Reports Section -->
+        <div x-show="activeSection === 'reports'" x-transition class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Weekly Appointments</h3>
+                    <div class="chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Revenue by Service</h3>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Export Reports</h3>
+                    <div class="space-x-2">
+                        <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-file-csv mr-2"></i>Export CSV
+                        </button>
+                        <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                            <i class="fas fa-file-pdf mr-2"></i>Export PDF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <!-- Settings Section -->
-    <section x-show="activeSection === 'settings'" x-transition>
-      <h2 class="text-xl font-bold mb-4">Settings & Staff Performance</h2>
-      <div class="bg-white p-4 rounded-lg shadow mb-4">
-        <h3 class="font-semibold">Clinic Info</h3>
-        <p>Address: 123 Dental St.</p>
-        <p>Contact: (123) 456-7890</p>
-        <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
-      </div>
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold">Staff Performance</h3>
-        <div class="h-32 bg-gray-200 rounded mt-2"></div>
-      </div>
-    </section>
-
-  </main>
-
-  <!-- Bottom Sticky Menu for Mobile -->
-  <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden z-40">
-    <div class="flex justify-around">
-      <template x-for="card in navCards" :key="card.id">
-        <button @click="activeSection = card.id"
-          :class="activeSection === card.id ? 'text-blue-500 font-bold' : 'text-gray-600'"
-          class="flex flex-col items-center text-sm">
-          <span x-text="card.icon"></span>
-          <span x-text="card.name"></span>
-        </button>
-      </template>
-    </div>
-  </div>
-
-  <!-- Alpine.js Data -->
-  <script>
-    function dashboardApp() {
-      return {
-        activeSection: 'dashboard',
-        navCards: [
-          { id: 'dashboard', name: 'Dashboard', value: '5 Today', icon: '📊' },
-          { id: 'appointments', name: 'Appointments', value: '10', icon: '📅' },
-          { id: 'patients', name: 'Patients', value: '150', icon: '🧑‍🤝‍🧑' },
-          { id: 'reports', name: 'Reports', value: '', icon: '📈' },
-          { id: 'settings', name: 'Settings', value: '', icon: '⚙️' },
-          { id: 'service', name: 'Service', value: '', icon: '🦷' },
-          { id: 'feedback', name: 'Feedback', value: '', icon: '💬' },
-        ]
-      }
-    }
-
-    // Chart.js for Reports Section
-    const ctx = document.getElementById('reportsChart').getContext('2d');
-    const reportsChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', '
+        <!-- Settings Section -->
+        <div x-show="activeSection === 'settings'" x-transition class="space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Clinic Information</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Clinic Name</label>
+                            <input type="text" value="Yanet Dental Clinic" class="mt-1 block w-full border-
