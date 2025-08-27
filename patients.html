@@ -13,22 +13,47 @@
 
 <!-- Top Navbar -->
 <nav class="bg-white shadow p-3 flex justify-between items-center sticky top-0 z-50">
-  <a href="dashboard.html" class="text-gray-700 font-semibold hover:text-gray-900">← Dashboard</a>
+  <a href="index.html" class="text-gray-700 font-semibold hover:text-gray-900">← Main Menu</a>
   <h1 class="text-lg font-bold">Patients</h1>
 </nav>
 
-<!-- Patients Content -->
+<!-- Page Content -->
 <div class="max-w-4xl mx-auto p-4" x-data="patientsSection()" x-init="init()">
 
+  <!-- Add Patient Button -->
+  <div class="mb-4">
+    <button @click="showAddForm=true" class="px-4 py-2 bg-blue-500 text-white rounded shadow">+ Add Patient</button>
+  </div>
+
+  <!-- Add Patient Modal -->
+  <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
+      <h2 class="font-bold text-lg">Add New Patient</h2>
+      <input type="text" x-model="newPatient.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
+      <input type="email" x-model="newPatient.email" placeholder="Email" class="w-full border px-2 py-1 rounded"/>
+      <input type="tel" x-model="newPatient.phone" placeholder="Phone Number" class="w-full border px-2 py-1 rounded"/>
+      <div class="flex justify-end space-x-2">
+        <button @click="showAddForm=false" class="px-3 py-1 border rounded">Cancel</button>
+        <button @click="addPatient()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Patients List -->
   <template x-for="patient in patients" :key="patient.id">
     <div class="border rounded shadow p-3 bg-white mb-4">
-      <!-- Patient Header -->
       <div class="flex justify-between items-center cursor-pointer" @click="patient.showAppointments = !patient.showAppointments">
         <div>
-          <span class="font-semibold text-lg" x-text="patient.name"></span>
+          <span class="font-semibold text-lg" x-text="patient.full_name"></span>
           <span class="text-gray-500 text-sm ml-2" x-text="'ID: ' + patient.id"></span>
         </div>
         <i class="fas" :class="patient.showAppointments ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="text-gray-600 text-sm mt-1 space-y-1">
+        <div x-text="'Email: ' + (patient.email || '-')"></div>
+        <div x-text="'Phone: ' + (patient.phone || '-')"></div>
       </div>
 
       <!-- Appointments List -->
@@ -41,20 +66,44 @@
                 <span x-text="appt.date"></span> | <span x-text="appt.time"></span>
               </div>
             </div>
-            <div>
+            <div class="flex items-center space-x-1">
               <span class="px-2 py-1 rounded text-xs font-bold" :class="{
                   'bg-green-500 text-white': appt.status==='confirmed',
                   'bg-yellow-400 text-white': appt.status==='rescheduled',
                   'bg-red-500 text-white': appt.status==='cancelled',
                   'bg-blue-500 text-white': appt.status==='new'
                 }" x-text="appt.status.toUpperCase()"></span>
+
+              <!-- Action Buttons -->
+              <button @click="updateStatus(appt,'confirmed')" class="bg-green-500 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='confirmed'">Confirm</button>
+              <button @click="reschedule(appt)" class="bg-yellow-400 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='cancelled'">Reschedule</button>
+              <button @click="updateStatus(appt,'cancelled')" class="bg-red-500 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='cancelled'">Cancel</button>
             </div>
           </div>
         </template>
         <div x-show="appointmentsByPatient(patient.id).length===0" class="text-gray-400 text-sm italic">No appointments yet.</div>
+
+        <!-- Add Appointment Button for this patient -->
+        <div class="mt-2">
+          <button @click="openAddAppt(patient)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">+ Add Appointment</button>
+        </div>
       </div>
     </div>
   </template>
+
+  <!-- Add Appointment Modal -->
+  <div x-show="showAddApptForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+    <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
+      <h2 class="font-bold text-lg">Add Appointment for <span x-text="selectedPatient.full_name"></span></h2>
+      <input type="text" x-model="newAppt.service" placeholder="Service" class="w-full border px-2 py-1 rounded"/>
+      <input type="date" x-model="newAppt.date" class="w-full border px-2 py-1 rounded"/>
+      <input type="time" x-model="newAppt.time" class="w-full border px-2 py-1 rounded"/>
+      <div class="flex justify-end space-x-2">
+        <button @click="showAddApptForm=false" class="px-3 py-1 border rounded">Cancel</button>
+        <button @click="addAppointment()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+      </div>
+    </div>
+  </div>
 
 </div>
 
@@ -65,6 +114,11 @@
     return {
       patients: [],
       appointments: [],
+      showAddForm: false,
+      showAddApptForm: false,
+      selectedPatient: null,
+      newPatient: { full_name:'', email:'', phone:'' },
+      newAppt: { service:'', date:'', time:'' },
 
       async init() {
         await this.fetchPatients();
@@ -72,22 +126,17 @@
 
         // Real-time subscriptions
         supabase.from('patients').on('INSERT', payload => {
-          this.patients.push(payload.new);
+          this.patients.push({...payload.new, showAppointments:false});
         }).subscribe();
 
         supabase.from('appointments').on('INSERT', payload => {
           this.appointments.push(payload.new);
         }).subscribe();
-
-        supabase.from('appointments').on('UPDATE', payload => {
-          const index = this.appointments.findIndex(a => a.id === payload.new.id);
-          if(index !== -1) this.appointments[index] = payload.new;
-        }).subscribe();
       },
 
       async fetchPatients() {
         const { data } = await supabase.from('patients').select('*');
-        this.patients = data.map(p => ({...p, showAppointments:false})) || [];
+        this.patients = (data || []).map(p => ({...p, showAppointments:false}));
       },
 
       async fetchAppointments() {
@@ -97,6 +146,65 @@
 
       appointmentsByPatient(patientId) {
         return this.appointments.filter(a => a.patient_id === patientId);
+      },
+
+      async addPatient() {
+        if(!this.newPatient.full_name) return alert("Full Name is required");
+
+        const { data, error } = await supabase.from('patients').insert([{
+          full_name: this.newPatient.full_name,
+          email: this.newPatient.email,
+          phone: this.newPatient.phone
+        }]);
+
+        if(error) return alert(error.message);
+
+        this.patients.push({...data[0], showAppointments:false});
+        this.newPatient = { full_name:'', email:'', phone:'' };
+        this.showAddForm = false;
+      },
+
+      openAddAppt(patient) {
+        this.selectedPatient = patient;
+        this.showAddApptForm = true;
+        this.newAppt = { service:'', date:'', time:'' };
+      },
+
+      async addAppointment() {
+        if(!this.newAppt.service || !this.newAppt.date || !this.newAppt.time) return alert("Fill all fields");
+
+        const { data, error } = await supabase.from('appointments').insert([{
+          patient_id: this.selectedPatient.id,
+          service: this.newAppt.service,
+          date: this.newAppt.date,
+          time: this.newAppt.time,
+          status: 'new',
+          is_new: true
+        }]);
+
+        if(error) return alert(error.message);
+
+        this.appointments.push(data[0]);
+        this.showAddApptForm = false;
+      },
+
+      async updateStatus(appt, status) {
+        appt.status = status;
+        if(status==='confirmed') appt.is_new = false;
+
+        const { error } = await supabase.from('appointments').update({status, is_new:appt.is_new}).eq('id', appt.id);
+        if(error) console.error(error.message);
+      },
+
+      reschedule(appt) {
+        const newDate = prompt("Enter new date (YYYY-MM-DD):", appt.date);
+        const newTime = prompt("Enter new time (HH:MM):", appt.time);
+        if(newDate && newTime){
+          appt.date = newDate;
+          appt.time = newTime;
+          appt.status = 'rescheduled';
+          supabase.from('appointments').update({date:newDate, time:newTime, status:'rescheduled'}).eq('id', appt.id);
+        }
       }
     }
   }
