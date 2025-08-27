@@ -1,176 +1,45 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dental Clinic Dashboard</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/alpinejs" defer></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yanet Dental Clinic - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
 </head>
-<body class="bg-white text-gray-800">
-  <div x-data="dashboardData()" class="min-h-screen flex flex-col">
+<body class="bg-gray-50" x-data="dashboardData()">
+
     <!-- Header -->
-    <header class="bg-blue-600 text-white p-4 flex justify-between items-center">
-      <h1 class="text-xl font-bold">Dental Clinic Dashboard</h1>
+    <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-tooth text-blue-600 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold text-gray-900">Yanet Dental Clinic</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-xl"></i>
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <img class="h-8 w-8 rounded-full" 
+                             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='16' fill='%233B82F6'/%3E%3Ctext x='16' y='21' text-anchor='middle' fill='white' font-family='Arial' font-size='14' font-weight='bold'%3EDr%3C/text%3E%3C/svg%3E" 
+                             alt="Profile">
+                        <span class="text-sm font-medium text-gray-700">Dr. Admin</span>
+                    </div>
+                </div>
+            </div>
+        </div>
     </header>
-
-    <!-- Navigation Buttons -->
-    <nav class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 p-4 bg-blue-50">
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='dashboard'">Dashboard</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='appointments'">Appointments</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='patients'">Patients</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='treatments'">Treatments</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='billing'">Billing</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='staff'">Staff</button>
-      <button class="px-3 py-2 bg-blue-600 text-white rounded-lg" @click="activeSection='reports'">Reports</button>
-    </nav>
-
-    <!-- Content -->
-    <main class="flex-1 p-4 space-y-6">
-      <!-- Dashboard Section -->
-      <section x-show="activeSection==='dashboard'">
-        <h2 class="text-lg font-semibold mb-4">Quick Stats</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <div class="p-4 bg-blue-100 rounded-lg shadow">
-            <p class="text-gray-600">Today's Appointments</p>
-            <p class="text-2xl font-bold" x-text="stats.todayAppointments"></p>
-          </div>
-          <div class="p-4 bg-green-100 rounded-lg shadow">
-            <p class="text-gray-600">New Patients</p>
-            <p class="text-2xl font-bold" x-text="stats.newPatients"></p>
-          </div>
-          <div class="p-4 bg-yellow-100 rounded-lg shadow">
-            <p class="text-gray-600">Upcoming Week</p>
-            <p class="text-2xl font-bold" x-text="stats.upcomingWeek"></p>
-          </div>
-          <div class="p-4 bg-purple-100 rounded-lg shadow">
-            <p class="text-gray-600">Revenue Today</p>
-            <p class="text-2xl font-bold">$<span x-text="stats.todayRevenue"></span></p>
-          </div>
-        </div>
-      </section>
-
-      <!-- Appointments Section -->
-      <section x-show="activeSection==='appointments'">
-        <h2 class="text-lg font-semibold mb-4">Appointments</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full border text-sm">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Time</th>
-                <th class="p-2 border">Patient</th>
-                <th class="p-2 border">Service</th>
-                <th class="p-2 border">Status</th>
-                <th class="p-2 border">Dentist</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="appt in appointments" :key="appt.id">
-                <tr>
-                  <td class="p-2 border" x-text="appt.time"></td>
-                  <td class="p-2 border" x-text="appt.patient"></td>
-                  <td class="p-2 border" x-text="appt.service"></td>
-                  <td class="p-2 border" x-text="appt.status"></td>
-                  <td class="p-2 border" x-text="appt.dentist"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Patients Section -->
-      <section x-show="activeSection==='patients'">
-        <h2 class="text-lg font-semibold mb-4">Patients</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full border text-sm">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="p-2 border">Name</th>
-                <th class="p-2 border">Email</th>
-                <th class="p-2 border">Phone</th>
-                <th class="p-2 border">Type</th>
-                <th class="p-2 border">Last Visit</th>
-              </tr>
-            </thead>
-            <tbody>
-              <template x-for="pat in patients" :key="pat.id">
-                <tr>
-                  <td class="p-2 border" x-text="pat.name"></td>
-                  <td class="p-2 border" x-text="pat.email"></td>
-                  <td class="p-2 border" x-text="pat.phone"></td>
-                  <td class="p-2 border" x-text="pat.type"></td>
-                  <td class="p-2 border" x-text="pat.lastVisit"></td>
-                </tr>
-              </template>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Reports Section -->
-      <section x-show="activeSection==='reports'">
-        <h2 class="text-lg font-semibold mb-4">Reports</h2>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <canvas id="weeklyChart"></canvas>
-          <canvas id="revenueChart"></canvas>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Alpine.js Data + Chart.js Setup -->
-  <script>
-    function dashboardData() {
-      return {
-        activeSection: 'dashboard',
-        stats: {
-          todayAppointments: 8,
-          newPatients: 3,
-          upcomingWeek: 14,
-          todayRevenue: 1200
-        },
-        appointments: [
-          {id: 1, time: "10:00 AM", patient: "John Doe", service: "Cleaning", status: "Confirmed", dentist: "Dr. A"},
-          {id: 2, time: "11:00 AM", patient: "Jane Smith", service: "Root Canal", status: "Pending", dentist: "Dr. B"}
-        ],
-        patients: [
-          {id: 1, name: "John Doe", email: "john@example.com", phone: "555-1234", type: "New", lastVisit: "—"},
-          {id: 2, name: "Jane Smith", email: "jane@example.com", phone: "555-5678", type: "Returning", lastVisit: "2024-07-12"}
-        ]
-      }
-    }
-
-    document.addEventListener('alpine:init', () => {
-      const ctx1 = document.getElementById('weeklyChart').getContext('2d');
-      new Chart(ctx1, {
-        type: 'line',
-        data: {
-          labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-          datasets: [{
-            label: 'Appointments',
-            data: [5, 8, 6, 10, 12, 7, 9],
-            borderColor: 'rgba(59,130,246,1)',
-            backgroundColor: 'rgba(59,130,246,0.2)',
-            fill: true
-          }]
-        }
-      });
-
-      const ctx2 = document.getElementById('revenueChart').getContext('2d');
-      new Chart(ctx2, {
-        type: 'bar',
-        data: {
-          labels: ['Cleaning','Filling','Root Canal','Whitening'],
-          datasets: [{
-            label: 'Revenue ($)',
-            data: [300, 500, 700, 400],
-            backgroundColor: ['#3B82F6','#10B981','#F59E0B','#8B5CF6']
-          }]
-        }
-      });
-    });
-  </script>
-</body>
-</html>
