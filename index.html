@@ -31,76 +31,64 @@
     </div>
   </div>
 </header>
+
 <!-- Dental Cards with 3 per row -->
 <div class="max-w-4xl mx-auto px-4 py-4">
-  
+
   <!-- First row of 3 -->
   <div class="grid grid-cols-3 gap-4 mb-4">
     <!-- Dashboard Card -->
-    <div @click="activeSection = 'dashboard'" 
-         :class="activeSection === 'dashboard' ? 'bg-teal-600 text-white' : 'bg-white text-teal-700 hover:bg-teal-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="dashboard.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-teal-700 hover:bg-teal-50 transition">
       <i class="fas fa-chart-line text-3xl text-sky-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Dashboard</span>
-    </div>
+    </a>
 
     <!-- Appointments Card -->
-    <div @click="activeSection = 'appointments'" 
-         :class="activeSection === 'appointments' ? 'bg-sky-600 text-white' : 'bg-white text-sky-700 hover:bg-sky-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="appointments.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-sky-700 hover:bg-sky-50 transition">
       <i class="fas fa-calendar-alt text-3xl text-sky-400 mb-2"></i>
       <span class="font-semibold text-sm text-center">Appointments</span>
-    </div>
+    </a>
 
     <!-- Patients Card -->
-    <div @click="activeSection = 'patients'" 
-         :class="activeSection === 'patients' ? 'bg-cyan-600 text-white' : 'bg-white text-cyan-700 hover:bg-cyan-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="patients.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-cyan-700 hover:bg-cyan-50 transition">
       <i class="fas fa-users text-3xl text-cyan-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Patients</span>
-    </div>
+    </a>
   </div>
 
   <!-- Second row of 3 -->
   <div class="grid grid-cols-3 gap-4 mb-4">
     <!-- Services Card -->
-    <div @click="activeSection = 'services'" 
-         :class="activeSection === 'services' ? 'bg-teal-600 text-white' : 'bg-white text-teal-700 hover:bg-teal-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="services.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-teal-700 hover:bg-teal-50 transition">
       <i class="fas fa-tooth text-3xl text-teal-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Services</span>
-    </div>
+    </a>
 
     <!-- Reports Card -->
-    <div @click="activeSection = 'reports'" 
-         :class="activeSection === 'reports' ? 'bg-blue-600 text-white' : 'bg-white text-blue-700 hover:bg-blue-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="reports.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-blue-700 hover:bg-blue-50 transition">
       <i class="fas fa-chart-pie text-3xl text-blue-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Reports</span>
-    </div>
+    </a>
 
     <!-- Settings Card -->
-    <div @click="activeSection = 'settings'" 
-         :class="activeSection === 'settings' ? 'bg-indigo-600 text-white' : 'bg-white text-indigo-700 hover:bg-indigo-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="settings.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-indigo-700 hover:bg-indigo-50 transition">
       <i class="fas fa-cog text-3xl text-indigo-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Settings</span>
-    </div>
+    </a>
   </div>
 
   <!-- Third row (Feedback centered) -->
   <div class="grid grid-cols-3 gap-4">
     <div></div> <!-- Empty space to center -->
     <!-- Feedback Card -->
-    <div @click="activeSection = 'feedback'" 
-         :class="activeSection === 'feedback' ? 'bg-sky-600 text-white' : 'bg-white text-sky-700 hover:bg-sky-50'"
-         class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
+    <a href="feedback.html" class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow bg-white text-sky-700 hover:bg-sky-50 transition">
       <i class="fas fa-comment-dots text-3xl text-sky-500 mb-2"></i>
       <span class="font-semibold text-sm text-center">Feedback</span>
-    </div>
+    </a>
     <div></div> <!-- Empty space -->
   </div>
 </div>
+
 <div x-data="dashboard()" x-init="init()" class="h-screen flex flex-col">
 
   <!-- AI Insights -->
@@ -274,6 +262,7 @@ function dashboard() {
     init() {
       this.fetchData();
 
+      // Real-time subscriptions
       supabase.from('appointments').on('INSERT', payload => {
         this.appointments.push(payload.new);
         this.updateNewAppointments();
@@ -293,3 +282,5 @@ function dashboard() {
   }
 }
 </script>
+</body>
+</html>
