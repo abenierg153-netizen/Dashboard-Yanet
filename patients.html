@@ -3,214 +3,183 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patients - Clinic Admin</title>
+  <title>Reports | Yanet Dental Clinic</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js@2.34.0/dist/supabase.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-gray-100">
 
-<!-- Top Navbar -->
-<nav class="bg-white shadow p-3 flex justify-between items-center sticky top-0 z-50">
-  <a href="index.html" class="text-gray-700 font-semibold hover:text-gray-900">← Main Menu</a>
-  <h1 class="text-lg font-bold">Patients</h1>
-</nav>
+  <!-- Header with Back Arrow -->
+  <header class="bg-white shadow-md fixed top-0 left-0 w-full z-50">
+    <div class="container mx-auto px-4 py-3 flex items-center">
+      <button onclick="history.back()" class="text-gray-600 hover:text-gray-900 mr-4">
+        <!-- Back Arrow -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+      <h1 class="text-xl font-semibold text-gray-700">Reports</h1>
+    </div>
+  </header>
 
-<!-- Page Content -->
-<div class="max-w-6xl mx-auto p-4" x-data="patientsSection()" x-init="init()">
+  <!-- Main Content -->
+  <div class="container mx-auto p-4 pt-20"> <!-- pt-20 to offset fixed header -->
 
-  <!-- Search and Add -->
-  <div class="flex justify-between mb-4">
-    <input type="text" x-model="searchQuery" placeholder="Search by name, email, phone, status" class="border px-3 py-2 rounded w-1/2"/>
-    <button @click="showAddForm=true" class="px-4 py-2 bg-blue-500 text-white rounded shadow">+ Add Patient</button>
-  </div>
-
-  <!-- Add Patient Modal -->
-  <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-    <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
-      <h2 class="font-bold text-lg">Add New Patient</h2>
-      <input type="text" x-model="newPatient.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
-      <input type="email" x-model="newPatient.email" placeholder="Email" class="w-full border px-2 py-1 rounded"/>
-      <input type="tel" x-model="newPatient.phone" placeholder="Phone Number" class="w-full border px-2 py-1 rounded"/>
-      <div class="flex justify-end space-x-2">
-        <button @click="showAddForm=false" class="px-3 py-1 border rounded">Cancel</button>
-        <button @click="addPatient()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+    <!-- Totals Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Appointments</h2>
+        <p id="total-appointments" class="text-3xl font-bold mt-2">0</p>
+      </div>
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Patients</h2>
+        <p id="total-patients" class="text-3xl font-bold mt-2">0</p>
       </div>
     </div>
-  </div>
 
-  <!-- Patients Table -->
-  <div class="overflow-x-auto bg-white shadow rounded">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('id')">ID</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('full_name')">Full Name</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('phone')">Phone</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('email')">Email</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
-        <template x-for="patient in filteredAndSortedPatients()" :key="patient.id">
-          <tr>
-            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.id"></td>
-            <td class="px-4 py-2 text-sm text-gray-700 flex items-center space-x-2">
-              <span x-text="patient.full_name"></span>
-              <span x-show="hasNewAppointment(patient.id)" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">NEW</span>
-            </td>
-            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.phone || '-'"></td>
-            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.email || '-'"></td>
-            <td class="px-4 py-2 text-sm text-gray-700" x-text="latestService(patient.id)"></td>
-            <td class="px-4 py-2 text-sm text-white font-bold px-2 py-1 rounded"
-                :class="{
-                  'bg-green-500': latestStatus(patient.id)=='confirmed',
-                  'bg-yellow-400': latestStatus(patient.id)=='rescheduled',
-                  'bg-red-500': latestStatus(patient.id)=='cancelled',
-                  'bg-blue-500': latestStatus(patient.id)=='new',
-                  'bg-gray-300': latestStatus(patient.id)=='' || latestStatus(patient.id)==null
-                }"
-                x-text="latestStatus(patient.id)?.toUpperCase() || '-'"></td>
-            <td class="px-4 py-2 space-x-1">
-              <button @click="openAddAppt(patient)" class="px-2 py-1 bg-blue-500 text-white rounded text-xs">+ Appt</button>
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-  </div>
+    <!-- Totals Bar Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Overall Totals</h2>
+      <canvas id="totalsBarChart" height="100"></canvas>
+    </div>
 
-  <!-- Add Appointment Modal -->
-  <div x-show="showAddApptForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
-    <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
-      <h2 class="font-bold text-lg">Add Appointment for <span x-text="selectedPatient.full_name"></span></h2>
-      <input type="text" x-model="newAppt.service" placeholder="Service" class="w-full border px-2 py-1 rounded"/>
-      <input type="date" x-model="newAppt.date" class="w-full border px-2 py-1 rounded"/>
-      <input type="time" x-model="newAppt.time" class="w-full border px-2 py-1 rounded"/>
-      <div class="flex justify-end space-x-2">
-        <button @click="showAddApptForm=false" class="px-3 py-1 border rounded">Cancel</button>
-        <button @click="addAppointment()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+    <!-- Monthly Growth Line Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Monthly Growth (Last 6 Months)</h2>
+      <canvas id="monthlyGrowthChart" height="100"></canvas>
+    </div>
+
+    <!-- Marketing Section -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Marketing</h2>
+      
+      <!-- Marketing Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="bg-blue-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Leads</p>
+          <p id="marketing-leads" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Conversions</p>
+          <p id="marketing-conversions" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Revenue</p>
+          <p id="marketing-revenue" class="text-2xl font-bold mt-2">$0</p>
+        </div>
+      </div>
+
+      <!-- Marketing Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead>
+            <tr class="bg-gray-200 text-gray-700">
+              <th class="py-2 px-4 text-left">Campaign</th>
+              <th class="py-2 px-4 text-left">Leads</th>
+              <th class="py-2 px-4 text-left">Conversions</th>
+              <th class="py-2 px-4 text-left">Revenue</th>
+            </tr>
+          </thead>
+          <tbody id="marketing-table-body"></tbody>
+        </table>
       </div>
     </div>
+
   </div>
 
-</div>
+  <script>
+    // Initial variables
+    let totalAppointments = 0;
+    let totalPatients = 0;
+    let monthlyGrowthData = [];
+    let marketingData = [];
 
-<script>
-const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+    const totalAppointmentsEl = document.getElementById('total-appointments');
+    const totalPatientsEl = document.getElementById('total-patients');
+    const marketingTableBody = document.getElementById('marketing-table-body');
+    const marketingLeadsEl = document.getElementById('marketing-leads');
+    const marketingConversionsEl = document.getElementById('marketing-conversions');
+    const marketingRevenueEl = document.getElementById('marketing-revenue');
 
-function patientsSection() {
-  return {
-    patients: [],
-    appointments: [],
-    showAddForm: false,
-    showAddApptForm: false,
-    selectedPatient: null,
-    newPatient: { full_name:'', email:'', phone:'' },
-    newAppt: { service:'', date:'', time:'' },
-    searchQuery: '',
-    sortField: 'id',
-    sortAsc: true,
-
-    async init() {
-      await this.fetchPatients();
-      await this.fetchAppointments();
-
-      // Real-time subscriptions
-      supabase.from('patients').on('INSERT', payload => {
-        this.patients.push(payload.new);
-      }).subscribe();
-
-      supabase.from('appointments').on('INSERT', payload => {
-        this.appointments.push(payload.new);
-      }).subscribe();
-    },
-
-    async fetchPatients() {
-      const { data } = await supabase.from('patients').select('*');
-      this.patients = data || [];
-    },
-
-    async fetchAppointments() {
-      const { data } = await supabase.from('appointments').select('*');
-      this.appointments = data || [];
-    },
-
-    filteredAndSortedPatients() {
-      let filtered = this.patients.filter(p =>
-        p.full_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
-        (p.phone && p.phone.includes(this.searchQuery)) ||
-        (p.email && p.email.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
-        this.latestStatus(p.id).toLowerCase().includes(this.searchQuery.toLowerCase())
-      );
-      return filtered.sort((a,b)=>{
-        if(this.sortAsc) return (a[this.sortField] > b[this.sortField]) ? 1 : -1;
-        return (a[this.sortField] < b[this.sortField]) ? 1 : -1;
-      });
-    },
-
-    latestService(patientId) {
-      const appts = this.appointments.filter(a => a.patient_id===patientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
-      return appts.length ? appts[0].service : '-';
-    },
-
-    latestStatus(patientId) {
-      const appts = this.appointments.filter(a => a.patient_id===patientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
-      return appts.length ? appts[0].status : '';
-    },
-
-    hasNewAppointment(patientId) {
-      return this.appointments.some(a => a.patient_id===patientId && a.is_new);
-    },
-
-    async addPatient() {
-      if(!this.newPatient.full_name) return alert("Full Name required");
-
-      const { data, error } = await supabase.from('patients').insert([{
-        full_name: this.newPatient.full_name,
-        email: this.newPatient.email,
-        phone: this.newPatient.phone
-      }]);
-
-      if(error) return alert(error.message);
-      this.patients.push(data[0]);
-      this.newPatient = { full_name:'', email:'', phone:'' };
-      this.showAddForm = false;
-    },
-
-    openAddAppt(patient) {
-      this.selectedPatient = patient;
-      this.showAddApptForm = true;
-      this.newAppt = { service:'', date:'', time:'' };
-    },
-
-    async addAppointment() {
-      if(!this.newAppt.service || !this.newAppt.date || !this.newAppt.time) return alert("Fill all fields");
-
-      const { data, error } = await supabase.from('appointments').insert([{
-        patient_id: this.selectedPatient.id,
-        service: this.newAppt.service,
-        date: this.newAppt.date,
-        time: this.newAppt.time,
-        status: 'new',
-        is_new: true
-      }]);
-
-      if(error) return alert(error.message);
-      this.appointments.push(data[0]);
-      this.showAddApptForm = false;
-    },
-
-    sortTable(field) {
-      if(this.sortField===field) this.sortAsc = !this.sortAsc;
-      else { this.sortField=field; this.sortAsc=true; }
+    function updateTotalsDisplay() {
+      totalAppointmentsEl.innerText = totalAppointments;
+      totalPatientsEl.innerText = totalPatients;
     }
-  }
-}
-</script>
+
+    function updateMarketingDisplay() {
+      marketingTableBody.innerHTML = '';
+      marketingData.forEach(item => {
+        const row = `<tr class="border-b">
+          <td class="py-2 px-4">${item.campaign}</td>
+          <td class="py-2 px-4">${item.leads}</td>
+          <td class="py-2 px-4">${item.conversions}</td>
+          <td class="py-2 px-4">$${item.revenue}</td>
+        </tr>`;
+        marketingTableBody.innerHTML += row;
+      });
+
+      const totalLeads = marketingData.reduce((sum, item) => sum + item.leads, 0);
+      const totalConversions = marketingData.reduce((sum, item) => sum + item.conversions, 0);
+      const totalRevenue = marketingData.reduce((sum, item) => sum + item.revenue, 0);
+
+      marketingLeadsEl.innerText = totalLeads;
+      marketingConversionsEl.innerText = totalConversions;
+      marketingRevenueEl.innerText = `$${totalRevenue}`;
+    }
+
+    // Charts
+    const totalsCtx = document.getElementById('totalsBarChart').getContext('2d');
+    const totalsChart = new Chart(totalsCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Appointments', 'Patients'],
+        datasets: [{ label: 'Total', data: [0,0], backgroundColor: ['#3B82F6', '#10B981'] }]
+      },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const monthlyGrowthCtx = document.getElementById('monthlyGrowthChart').getContext('2d');
+    const monthlyGrowthChart = new Chart(monthlyGrowthCtx, {
+      type: 'line',
+      data: { labels: ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'], datasets: [{ label: 'Appointments', data: [], borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.4, fill: true }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    function refreshCharts() {
+      totalsChart.data.datasets[0].data = [totalAppointments, totalPatients];
+      totalsChart.update();
+
+      monthlyGrowthChart.data.datasets[0].data = monthlyGrowthData;
+      monthlyGrowthChart.update();
+    }
+
+    // Fetch data from backend
+    async function fetchAndUpdateReports() {
+      try {
+        const response = await fetch('/api/reports'); // Replace with your API endpoint
+        if (!response.ok) throw new Error('Network response was not ok');
+
+        const data = await response.json();
+
+        totalAppointments = data.totals.appointments;
+        totalPatients = data.totals.patients;
+        monthlyGrowthData = data.monthlyGrowth;
+        marketingData = data.marketing;
+
+        updateTotalsDisplay();
+        updateMarketingDisplay();
+        refreshCharts();
+
+      } catch (error) {
+        console.error('Error fetching report data:', error);
+      }
+    }
+
+    // Initial fetch
+    fetchAndUpdateReports();
+    // Optional auto-refresh every 1 minute
+    setInterval(fetchAndUpdateReports, 60000);
+  </script>
 
 </body>
 </html>
