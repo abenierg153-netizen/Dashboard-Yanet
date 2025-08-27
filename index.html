@@ -1,209 +1,202 @@
 <!DOCTYPE html>
-<html lang="en" x-data>
+<html lang="en" x-data="dashboardApp()">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Yanet Dental Clinic Dashboard</title>
-    <!-- Tailwind CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <!-- Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <!-- htmx -->
-    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Yanet Dental Clinic Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body class="bg-gray-100">
 
-<!-- Header -->
-<header class="bg-white shadow">
+<body class="bg-gray-100 font-sans">
+
+  <!-- Sticky Header -->
+  <header class="bg-white shadow sticky top-0 z-50">
     <div class="container mx-auto flex justify-between items-center p-4">
-        <div class="flex items-center">
-            <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
-            <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
-        </div>
-        <div class="flex items-center space-x-4">
-            <button class="text-gray-600 hover:text-blue-600">🔔</button>
-            <button class="text-gray-600 hover:text-blue-600">👤</button>
-        </div>
+      <div class="flex items-center">
+        <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
+        <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
+      </div>
+      <div class="flex items-center space-x-4">
+        <button class="text-gray-600 hover:text-blue-500">🔔</button>
+        <button class="text-gray-600 hover:text-blue-500">👤</button>
+      </div>
     </div>
-</header>
+  </header>
 
-<!-- Sticky Bottom Menu -->
-<div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden z-50">
-    <div class="flex justify-around text-gray-600">
-        <button @click="$dispatch('navigate','dashboard')" class="hover:text-blue-600">Dashboard</button>
-        <button @click="$dispatch('navigate','appointments')" class="hover:text-blue-600">Appointments</button>
-        <button @click="$dispatch('navigate','patients')" class="hover:text-blue-600">Patients</button>
-        <button @click="$dispatch('navigate','reports')" class="hover:text-blue-600">Reports</button>
-        <button @click="$dispatch('navigate','settings')" class="hover:text-blue-600">Settings</button>
-        <button @click="$dispatch('navigate','services')" class="hover:text-blue-600">Services</button>
-        <button @click="$dispatch('navigate','feedback')" class="hover:text-blue-600">Feedback</button>
+  <!-- Top Navigation Cards -->
+  <section class="container mx-auto mt-4 px-4">
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+      <template x-for="card in navCards" :key="card.id">
+        <button @click="activeSection = card.id"
+          :class="activeSection === card.id ? 'bg-blue-500 text-white' : 'bg-white text-gray-800'"
+          class="rounded-lg p-4 shadow hover:shadow-lg flex flex-col items-center transition-colors">
+          <span class="text-2xl mb-1" x-text="card.icon"></span>
+          <span class="font-medium text-sm" x-text="card.name"></span>
+          <span class="text-xs mt-1" x-text="card.value"></span>
+        </button>
+      </template>
     </div>
-</div>
+  </section>
 
-<!-- Main Content -->
-<main class="container mx-auto p-4 space-y-6">
-
-    <!-- Dashboard -->
-    <section id="dashboard" x-show="$store.page=='dashboard'" x-data="{ appointments:0, revenue:0, newPatients:0 }"
-             x-init="fetch('/api/dashboard.json').then(r=>r.json()).then(d=>{appointments=d.appointments; revenue=d.revenue; newPatients=d.newPatients})"
-             class="space-y-4">
-        <h2 class="text-xl font-bold">Dashboard Overview</h2>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">Appointments Today</h3>
-                <p class="text-2xl" x-text="appointments">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">Revenue Today</h3>
-                <p class="text-2xl" x-text="`$${revenue}`">$0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">New Patients Today</h3>
-                <p class="text-2xl" x-text="newPatients">0</p>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">AI Insights</h3>
-                <ul class="text-sm text-gray-700 space-y-1">
-                    <li>Cleaning: High demand</li>
-                    <li>Whitening: Medium demand</li>
-                    <li>Potential no-shows: 2</li>
-                </ul>
-            </div>
+  <!-- Sections -->
+  <main class="container mx-auto mt-6 px-4 space-y-6">
+    
+    <!-- Dashboard Section -->
+    <section x-show="activeSection === 'dashboard'" class="space-y-4" x-transition>
+      <h2 class="text-xl font-bold">Dashboard Overview</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="font-semibold">Appointments Today</h3>
+          <p class="text-2xl">5</p>
         </div>
-
-        <!-- Charts -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold mb-2">Weekly Appointments</h3>
-                <canvas id="appointmentsChart" class="w-full h-48"></canvas>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold mb-2">Patient Growth</h3>
-                <canvas id="patientsChart" class="w-full h-48"></canvas>
-            </div>
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="font-semibold">New Patients</h3>
+          <p class="text-2xl">3</p>
         </div>
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="font-semibold">Upcoming Appointments</h3>
+          <ul class="text-sm mt-2">
+            <li>John Doe - 10:00 AM</li>
+            <li>Jane Smith - 11:30 AM</li>
+            <li>Mark Wilson - 1:00 PM</li>
+          </ul>
+        </div>
+      </div>
     </section>
 
-    <!-- Appointments -->
-    <section id="appointments" x-show="$store.page=='appointments'" class="space-y-4">
-        <h2 class="text-xl font-bold">Appointments</h2>
-        <div class="flex space-x-2 mb-4">
-            <button class="px-4 py-2 bg-gray-200 rounded" @click="view='daily'">Daily</button>
-            <button class="px-4 py-2 bg-gray-200 rounded" @click="view='weekly'">Weekly</button>
-        </div>
-        <table class="min-w-full bg-white border rounded-lg overflow-hidden shadow">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="border px-4 py-2">Time</th>
-                    <th class="border px-4 py-2">Patient</th>
-                    <th class="border px-4 py-2">Service</th>
-                    <th class="border px-4 py-2">Status</th>
-                    <th class="border px-4 py-2">Dentist</th>
-                    <th class="border px-4 py-2">Action</th>
-                </tr>
-            </thead>
-            <tbody hx-get="/api/appointments.html" hx-trigger="load" hx-target="this">
-                <!-- Dynamic rows loaded via htmx -->
-            </tbody>
+    <!-- Appointments Section -->
+    <section x-show="activeSection === 'appointments'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Appointments</h2>
+      <div class="flex justify-start space-x-2 mb-4">
+        <button class="bg-blue-500 text-white px-4 py-2 rounded">Daily</button>
+        <button class="bg-gray-200 px-4 py-2 rounded">Weekly</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border rounded-lg">
+          <thead>
+            <tr class="bg-gray-50">
+              <th class="border px-4 py-2">Time</th>
+              <th class="border px-4 py-2">Patient</th>
+              <th class="border px-4 py-2">Service</th>
+              <th class="border px-4 py-2">Status</th>
+              <th class="border px-4 py-2">Dentist</th>
+              <th class="border px-4 py-2">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="border px-4 py-2">10:00 AM</td>
+              <td class="border px-4 py-2">John Doe</td>
+              <td class="border px-4 py-2">Cleaning</td>
+              <td class="border px-4 py-2 text-green-500">Confirmed</td>
+              <td class="border px-4 py-2">Dr. Smith</td>
+              <td class="border px-4 py-2">
+                <button class="text-blue-600 hover:underline mr-2">Confirm</button>
+                <button class="text-red-600 hover:underline">Cancel</button>
+              </td>
+            </tr>
+          </tbody>
         </table>
+      </div>
     </section>
 
-    <!-- Patients -->
-    <section id="patients" x-show="$store.page=='patients'" class="space-y-4">
-        <h2 class="text-xl font-bold">Patients</h2>
-        <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold">Total Patients: <span x-text="150">150</span></h3>
-            <h3 class="font-semibold mt-2">New vs Returning</h3>
-            <div class="h-32 bg-gray-200"></div>
+    <!-- Patients Section -->
+    <section x-show="activeSection === 'patients'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Patients</h2>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold">Total Patients</h3>
+        <p class="text-2xl">150</p>
+        <h3 class="font-semibold mt-4">New vs Returning</h3>
+        <div class="h-32 bg-gray-200 rounded mt-2"></div>
+      </div>
+    </section>
+
+    <!-- Reports Section with Chart -->
+    <section x-show="activeSection === 'reports'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Reports</h2>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <canvas id="reportsChart" class="w-full h-64"></canvas>
+      </div>
+    </section>
+
+    <!-- Services Section -->
+    <section x-show="activeSection === 'service'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Services</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="font-semibold">Teeth Cleaning</h3>
+          <p class="text-gray-600 mt-1">Duration: 45 min | Price: $50</p>
         </div>
-    </section>
-
-    <!-- Reports -->
-    <section id="reports" x-show="$store.page=='reports'" class="space-y-4">
-        <h2 class="text-xl font-bold">Reports</h2>
-        <button class="bg-blue-600 text-white px-4 py-2 rounded" @click="alert('Export CSV/PDF')">Export Reports</button>
-    </section>
-
-    <!-- Settings -->
-    <section id="settings" x-show="$store.page=='settings'" class="space-y-4">
-        <h2 class="text-xl font-bold">Settings & Staff Performance</h2>
-        <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold">Clinic Info</h3>
-            <p>Address: 123 Dental St.</p>
-            <p>Contact: (123) 456-7890</p>
-            <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
+        <div class="bg-white rounded-lg shadow p-4">
+          <h3 class="font-semibold">Whitening</h3>
+          <p class="text-gray-600 mt-1">Duration: 60 min | Price: $80</p>
         </div>
-        <div class="bg-white p-4 rounded-lg shadow mt-4">
-            <h3 class="font-semibold">Staff Performance</h3>
-            <div class="h-32 bg-gray-200"></div>
-        </div>
+      </div>
     </section>
 
-    <!-- Services -->
-    <section id="services" x-show="$store.page=='services'" class="space-y-4">
-        <h2 class="text-xl font-bold">Services</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">Deep Cleaning</h3>
-                <p>$120 / 60min</p>
-                <button class="mt-2 bg-blue-600 text-white px-3 py-1 rounded">Edit</button>
-            </div>
-        </div>
+    <!-- Feedback Section -->
+    <section x-show="activeSection === 'feedback'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Feedback</h2>
+      <ul class="bg-white p-4 rounded-lg shadow divide-y divide-gray-200">
+        <li class="py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
+        <li class="py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
+      </ul>
     </section>
 
-    <!-- Feedback -->
-    <section id="feedback" x-show="$store.page=='feedback'" class="space-y-4">
-        <h2 class="text-xl font-bold">Patient Feedback</h2>
-        <ul class="bg-white p-4 rounded-lg shadow">
-            <li class="border-b py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
-            <li class="border-b py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
-        </ul>
+    <!-- Settings Section -->
+    <section x-show="activeSection === 'settings'" x-transition>
+      <h2 class="text-xl font-bold mb-4">Settings & Staff Performance</h2>
+      <div class="bg-white p-4 rounded-lg shadow mb-4">
+        <h3 class="font-semibold">Clinic Info</h3>
+        <p>Address: 123 Dental St.</p>
+        <p>Contact: (123) 456-7890</p>
+        <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold">Staff Performance</h3>
+        <div class="h-32 bg-gray-200 rounded mt-2"></div>
+      </div>
     </section>
 
-</main>
+  </main>
 
-<!-- Charts Script -->
-<script>
-document.addEventListener('alpine:init', () => {
-    Alpine.store('page', 'dashboard');
-});
-document.addEventListener('DOMContentLoaded', () => {
-    const ctxA = document.getElementById('appointmentsChart').getContext('2d');
-    new Chart(ctxA, {
-        type: 'line',
-        data: {
-            labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-            datasets:[{
-                label:'Appointments',
-                data:[5,8,6,10,7,12,9],
-                borderColor:'rgba(59,130,246,1)',
-                backgroundColor:'rgba(59,130,246,0.2)',
-                fill:true,
-                tension:0.4
-            }]
-        },
-        options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true, stepSize:1}}}
-    });
+  <!-- Bottom Sticky Menu for Mobile -->
+  <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden z-40">
+    <div class="flex justify-around">
+      <template x-for="card in navCards" :key="card.id">
+        <button @click="activeSection = card.id"
+          :class="activeSection === card.id ? 'text-blue-500 font-bold' : 'text-gray-600'"
+          class="flex flex-col items-center text-sm">
+          <span x-text="card.icon"></span>
+          <span x-text="card.name"></span>
+        </button>
+      </template>
+    </div>
+  </div>
 
-    const ctxP = document.getElementById('patientsChart').getContext('2d');
-    new Chart(ctxP, {
-        type:'bar',
-        data:{
-            labels:['Jan','Feb','Mar','Apr','May','Jun','Jul'],
-            datasets:[{
-                label:'New Patients',
-                data:[10,12,8,15,9,14,11],
-                backgroundColor:'rgba(16,185,129,0.7)',
-                borderColor:'rgba(16,185,129,1)',
-                borderWidth:1
-            }]
-        },
-        options:{responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
-    });
-});
-</script>
+  <!-- Alpine.js Data -->
+  <script>
+    function dashboardApp() {
+      return {
+        activeSection: 'dashboard',
+        navCards: [
+          { id: 'dashboard', name: 'Dashboard', value: '5 Today', icon: '📊' },
+          { id: 'appointments', name: 'Appointments', value: '10', icon: '📅' },
+          { id: 'patients', name: 'Patients', value: '150', icon: '🧑‍🤝‍🧑' },
+          { id: 'reports', name: 'Reports', value: '', icon: '📈' },
+          { id: 'settings', name: 'Settings', value: '', icon: '⚙️' },
+          { id: 'service', name: 'Service', value: '', icon: '🦷' },
+          { id: 'feedback', name: 'Feedback', value: '', icon: '💬' },
+        ]
+      }
+    }
 
-</body>
-</html>
+    // Chart.js for Reports Section
+    const ctx = document.getElementById('reportsChart').getContext('2d');
+    const reportsChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', '
