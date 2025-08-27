@@ -18,10 +18,11 @@
 </nav>
 
 <!-- Page Content -->
-<div class="max-w-4xl mx-auto p-4" x-data="patientsSection()" x-init="init()">
+<div class="max-w-6xl mx-auto p-4" x-data="patientsSection()" x-init="init()">
 
-  <!-- Add Patient Button -->
-  <div class="mb-4">
+  <!-- Search and Add -->
+  <div class="flex justify-between mb-4">
+    <input type="text" x-model="searchQuery" placeholder="Search by name, email, phone, status" class="border px-3 py-2 rounded w-1/2"/>
     <button @click="showAddForm=true" class="px-4 py-2 bg-blue-500 text-white rounded shadow">+ Add Patient</button>
   </div>
 
@@ -39,57 +40,48 @@
     </div>
   </div>
 
-  <!-- Patients List -->
-  <template x-for="patient in patients" :key="patient.id">
-    <div class="border rounded shadow p-3 bg-white mb-4">
-      <div class="flex justify-between items-center cursor-pointer" @click="patient.showAppointments = !patient.showAppointments">
-        <div>
-          <span class="font-semibold text-lg" x-text="patient.full_name"></span>
-          <span class="text-gray-500 text-sm ml-2" x-text="'ID: ' + patient.id"></span>
-        </div>
-        <i class="fas" :class="patient.showAppointments ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
-      </div>
-
-      <!-- Contact Info -->
-      <div class="text-gray-600 text-sm mt-1 space-y-1">
-        <div x-text="'Email: ' + (patient.email || '-')"></div>
-        <div x-text="'Phone: ' + (patient.phone || '-')"></div>
-      </div>
-
-      <!-- Appointments List -->
-      <div x-show="patient.showAppointments" class="mt-2 space-y-2">
-        <template x-for="appt in appointmentsByPatient(patient.id)" :key="appt.id">
-          <div class="border rounded p-2 flex justify-between items-center bg-gray-50">
-            <div class="flex-1 space-y-1">
-              <div><span class="font-semibold" x-text="appt.service"></span></div>
-              <div class="text-gray-600 text-sm">
-                <span x-text="appt.date"></span> | <span x-text="appt.time"></span>
-              </div>
-            </div>
-            <div class="flex items-center space-x-1">
-              <span class="px-2 py-1 rounded text-xs font-bold" :class="{
-                  'bg-green-500 text-white': appt.status==='confirmed',
-                  'bg-yellow-400 text-white': appt.status==='rescheduled',
-                  'bg-red-500 text-white': appt.status==='cancelled',
-                  'bg-blue-500 text-white': appt.status==='new'
-                }" x-text="appt.status.toUpperCase()"></span>
-
-              <!-- Action Buttons -->
-              <button @click="updateStatus(appt,'confirmed')" class="bg-green-500 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='confirmed'">Confirm</button>
-              <button @click="reschedule(appt)" class="bg-yellow-400 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='cancelled'">Reschedule</button>
-              <button @click="updateStatus(appt,'cancelled')" class="bg-red-500 text-white px-2 py-1 rounded text-xs" x-show="appt.status!=='cancelled'">Cancel</button>
-            </div>
-          </div>
+  <!-- Patients Table -->
+  <div class="overflow-x-auto bg-white shadow rounded">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('id')">ID</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('full_name')">Full Name</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('phone')">Phone</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer" @click="sortTable('email')">Email</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Service</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+          <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200 bg-white">
+        <template x-for="patient in filteredAndSortedPatients()" :key="patient.id">
+          <tr>
+            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.id"></td>
+            <td class="px-4 py-2 text-sm text-gray-700 flex items-center space-x-2">
+              <span x-text="patient.full_name"></span>
+              <span x-show="hasNewAppointment(patient.id)" class="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded">NEW</span>
+            </td>
+            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.phone || '-'"></td>
+            <td class="px-4 py-2 text-sm text-gray-700" x-text="patient.email || '-'"></td>
+            <td class="px-4 py-2 text-sm text-gray-700" x-text="latestService(patient.id)"></td>
+            <td class="px-4 py-2 text-sm text-white font-bold px-2 py-1 rounded"
+                :class="{
+                  'bg-green-500': latestStatus(patient.id)=='confirmed',
+                  'bg-yellow-400': latestStatus(patient.id)=='rescheduled',
+                  'bg-red-500': latestStatus(patient.id)=='cancelled',
+                  'bg-blue-500': latestStatus(patient.id)=='new',
+                  'bg-gray-300': latestStatus(patient.id)=='' || latestStatus(patient.id)==null
+                }"
+                x-text="latestStatus(patient.id)?.toUpperCase() || '-'"></td>
+            <td class="px-4 py-2 space-x-1">
+              <button @click="openAddAppt(patient)" class="px-2 py-1 bg-blue-500 text-white rounded text-xs">+ Appt</button>
+            </td>
+          </tr>
         </template>
-        <div x-show="appointmentsByPatient(patient.id).length===0" class="text-gray-400 text-sm italic">No appointments yet.</div>
-
-        <!-- Add Appointment Button for this patient -->
-        <div class="mt-2">
-          <button @click="openAddAppt(patient)" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">+ Add Appointment</button>
-        </div>
-      </div>
-    </div>
-  </template>
+      </tbody>
+    </table>
+  </div>
 
   <!-- Add Appointment Modal -->
   <div x-show="showAddApptForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
@@ -108,106 +100,116 @@
 </div>
 
 <script>
-  const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
 
-  function patientsSection() {
-    return {
-      patients: [],
-      appointments: [],
-      showAddForm: false,
-      showAddApptForm: false,
-      selectedPatient: null,
-      newPatient: { full_name:'', email:'', phone:'' },
-      newAppt: { service:'', date:'', time:'' },
+function patientsSection() {
+  return {
+    patients: [],
+    appointments: [],
+    showAddForm: false,
+    showAddApptForm: false,
+    selectedPatient: null,
+    newPatient: { full_name:'', email:'', phone:'' },
+    newAppt: { service:'', date:'', time:'' },
+    searchQuery: '',
+    sortField: 'id',
+    sortAsc: true,
 
-      async init() {
-        await this.fetchPatients();
-        await this.fetchAppointments();
+    async init() {
+      await this.fetchPatients();
+      await this.fetchAppointments();
 
-        // Real-time subscriptions
-        supabase.from('patients').on('INSERT', payload => {
-          this.patients.push({...payload.new, showAppointments:false});
-        }).subscribe();
+      // Real-time subscriptions
+      supabase.from('patients').on('INSERT', payload => {
+        this.patients.push(payload.new);
+      }).subscribe();
 
-        supabase.from('appointments').on('INSERT', payload => {
-          this.appointments.push(payload.new);
-        }).subscribe();
-      },
+      supabase.from('appointments').on('INSERT', payload => {
+        this.appointments.push(payload.new);
+      }).subscribe();
+    },
 
-      async fetchPatients() {
-        const { data } = await supabase.from('patients').select('*');
-        this.patients = (data || []).map(p => ({...p, showAppointments:false}));
-      },
+    async fetchPatients() {
+      const { data } = await supabase.from('patients').select('*');
+      this.patients = data || [];
+    },
 
-      async fetchAppointments() {
-        const { data } = await supabase.from('appointments').select('*');
-        this.appointments = data || [];
-      },
+    async fetchAppointments() {
+      const { data } = await supabase.from('appointments').select('*');
+      this.appointments = data || [];
+    },
 
-      appointmentsByPatient(patientId) {
-        return this.appointments.filter(a => a.patient_id === patientId);
-      },
+    filteredAndSortedPatients() {
+      let filtered = this.patients.filter(p =>
+        p.full_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+        (p.phone && p.phone.includes(this.searchQuery)) ||
+        (p.email && p.email.toLowerCase().includes(this.searchQuery.toLowerCase())) ||
+        this.latestStatus(p.id).toLowerCase().includes(this.searchQuery.toLowerCase())
+      );
+      return filtered.sort((a,b)=>{
+        if(this.sortAsc) return (a[this.sortField] > b[this.sortField]) ? 1 : -1;
+        return (a[this.sortField] < b[this.sortField]) ? 1 : -1;
+      });
+    },
 
-      async addPatient() {
-        if(!this.newPatient.full_name) return alert("Full Name is required");
+    latestService(patientId) {
+      const appts = this.appointments.filter(a => a.patient_id===patientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+      return appts.length ? appts[0].service : '-';
+    },
 
-        const { data, error } = await supabase.from('patients').insert([{
-          full_name: this.newPatient.full_name,
-          email: this.newPatient.email,
-          phone: this.newPatient.phone
-        }]);
+    latestStatus(patientId) {
+      const appts = this.appointments.filter(a => a.patient_id===patientId).sort((a,b)=>new Date(b.date)-new Date(a.date));
+      return appts.length ? appts[0].status : '';
+    },
 
-        if(error) return alert(error.message);
+    hasNewAppointment(patientId) {
+      return this.appointments.some(a => a.patient_id===patientId && a.is_new);
+    },
 
-        this.patients.push({...data[0], showAppointments:false});
-        this.newPatient = { full_name:'', email:'', phone:'' };
-        this.showAddForm = false;
-      },
+    async addPatient() {
+      if(!this.newPatient.full_name) return alert("Full Name required");
 
-      openAddAppt(patient) {
-        this.selectedPatient = patient;
-        this.showAddApptForm = true;
-        this.newAppt = { service:'', date:'', time:'' };
-      },
+      const { data, error } = await supabase.from('patients').insert([{
+        full_name: this.newPatient.full_name,
+        email: this.newPatient.email,
+        phone: this.newPatient.phone
+      }]);
 
-      async addAppointment() {
-        if(!this.newAppt.service || !this.newAppt.date || !this.newAppt.time) return alert("Fill all fields");
+      if(error) return alert(error.message);
+      this.patients.push(data[0]);
+      this.newPatient = { full_name:'', email:'', phone:'' };
+      this.showAddForm = false;
+    },
 
-        const { data, error } = await supabase.from('appointments').insert([{
-          patient_id: this.selectedPatient.id,
-          service: this.newAppt.service,
-          date: this.newAppt.date,
-          time: this.newAppt.time,
-          status: 'new',
-          is_new: true
-        }]);
+    openAddAppt(patient) {
+      this.selectedPatient = patient;
+      this.showAddApptForm = true;
+      this.newAppt = { service:'', date:'', time:'' };
+    },
 
-        if(error) return alert(error.message);
+    async addAppointment() {
+      if(!this.newAppt.service || !this.newAppt.date || !this.newAppt.time) return alert("Fill all fields");
 
-        this.appointments.push(data[0]);
-        this.showAddApptForm = false;
-      },
+      const { data, error } = await supabase.from('appointments').insert([{
+        patient_id: this.selectedPatient.id,
+        service: this.newAppt.service,
+        date: this.newAppt.date,
+        time: this.newAppt.time,
+        status: 'new',
+        is_new: true
+      }]);
 
-      async updateStatus(appt, status) {
-        appt.status = status;
-        if(status==='confirmed') appt.is_new = false;
+      if(error) return alert(error.message);
+      this.appointments.push(data[0]);
+      this.showAddApptForm = false;
+    },
 
-        const { error } = await supabase.from('appointments').update({status, is_new:appt.is_new}).eq('id', appt.id);
-        if(error) console.error(error.message);
-      },
-
-      reschedule(appt) {
-        const newDate = prompt("Enter new date (YYYY-MM-DD):", appt.date);
-        const newTime = prompt("Enter new time (HH:MM):", appt.time);
-        if(newDate && newTime){
-          appt.date = newDate;
-          appt.time = newTime;
-          appt.status = 'rescheduled';
-          supabase.from('appointments').update({date:newDate, time:newTime, status:'rescheduled'}).eq('id', appt.id);
-        }
-      }
+    sortTable(field) {
+      if(this.sortField===field) this.sortAsc = !this.sortAsc;
+      else { this.sortField=field; this.sortAsc=true; }
     }
   }
+}
 </script>
 
 </body>
