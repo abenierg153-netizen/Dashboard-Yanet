@@ -33,13 +33,12 @@
 </header>
 <!-- Dental Cards with 3 per row -->
 <div class="max-w-4xl mx-auto px-4 py-4">
-  <h2 class="text-lg font-semibold mb-2">Quick Actions</h2>
   
   <!-- First row of 3 -->
   <div class="grid grid-cols-3 gap-4 mb-4">
     <!-- Dashboard Card -->
     <div @click="activeSection = 'dashboard'" 
-         :class="activeSection === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         :class="activeSection === 'dashboard' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-chart-line text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Dashboard</span>
@@ -47,7 +46,7 @@
 
     <!-- Appointments Card -->
     <div @click="activeSection = 'appointments'" 
-         :class="activeSection === 'appointments' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         :class="activeSection === 'appointments' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-calendar-alt text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Appointments</span>
@@ -55,7 +54,7 @@
 
     <!-- Patients Card -->
     <div @click="activeSection = 'patients'" 
-         :class="activeSection === 'patients' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         :class="activeSection === 'patients' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-users text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Patients</span>
@@ -64,17 +63,17 @@
 
   <!-- Second row of 3 -->
   <div class="grid grid-cols-3 gap-4 mb-4">
-    <!-- Billing Card -->
-    <div @click="activeSection = 'billing'" 
-         :class="activeSection === 'billing' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
+    <!-- Services Card (was Billing) -->
+    <div @click="activeSection = 'services'" 
+         :class="activeSection === 'services' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
-      <i class="fas fa-file-invoice-dollar text-2xl mb-2"></i>
-      <span class="font-semibold text-sm text-center">Billing</span>
+      <i class="fas fa-tooth text-2xl mb-2"></i>
+      <span class="font-semibold text-sm text-center">Services</span>
     </div>
 
     <!-- Reports Card -->
     <div @click="activeSection = 'reports'" 
-         :class="activeSection === 'reports' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
+         :class="activeSection === 'reports' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-chart-pie text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Reports</span>
@@ -82,21 +81,21 @@
 
     <!-- Settings Card -->
     <div @click="activeSection = 'settings'" 
-         :class="activeSection === 'settings' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
+         :class="activeSection === 'settings' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
       <i class="fas fa-cog text-2xl mb-2"></i>
       <span class="font-semibold text-sm text-center">Settings</span>
     </div>
   </div>
 
-  <!-- Third row (left aligned if less than 3) -->
+  <!-- Third row (Feedback only) -->
   <div class="grid grid-cols-3 gap-4">
-    <!-- Support Card -->
-    <div @click="activeSection = 'support'" 
-         :class="activeSection === 'support' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+    <!-- Feedback Card (was Support) -->
+    <div @click="activeSection = 'feedback'" 
+         :class="activeSection === 'feedback' ? 'bg-teal-600 text-white' : 'bg-teal-100 text-teal-800 hover:bg-teal-200'"
          class="h-32 flex flex-col items-center justify-center p-3 rounded-lg shadow cursor-pointer transition">
-      <i class="fas fa-life-ring text-2xl mb-2"></i>
-      <span class="font-semibold text-sm text-center">Support</span>
+      <i class="fas fa-comment-dots text-2xl mb-2"></i>
+      <span class="font-semibold text-sm text-center">Feedback</span>
     </div>
   </div>
 </div>
