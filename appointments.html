@@ -40,32 +40,58 @@
       </button>
     </div>
 
-    <!-- Appointments List -->
-    <div class="space-y-3">
-      <template x-for="appt in filteredAppointments(activeTab)" :key="appt.id">
-        <div class="p-3 border rounded flex justify-between items-center bg-white shadow-sm">
-          <div>
-            <div class="font-bold text-gray-800" x-text="appt.patient_name"></div>
-            <div class="text-gray-500 text-sm" x-text="appt.email + ' | ' + appt.phone"></div>
-            <div class="text-gray-500 text-sm" x-text="appt.service + ' | ' + appt.date + ' | ' + appt.time"></div>
-            <div class="text-gray-600 text-xs" x-text="'Status: ' + appt.status"></div>
-          </div>
-          <div class="flex items-center space-x-2">
-            <div :class="appt.is_new ? 'bg-red-500 text-white px-2 py-1 rounded text-xs font-bold' : ''"
-                 x-text="appt.is_new ? 'NEW' : ''"></div>
-            <button @click="confirmAppointment(appt)" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Confirm</button>
-            <button @click="rescheduleAppointment(appt)" class="bg-yellow-400 text-white px-2 py-1 rounded text-xs">Reschedule</button>
-            <button @click="cancelAppointment(appt)" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Cancel</button>
-          </div>
-        </div>
-      </template>
+    <!-- Appointments Table -->
+    <div class="overflow-x-auto bg-white shadow rounded">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">NEW</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Full Name</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Phone</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Service</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Date</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Time</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <template x-for="appt in sortedFilteredAppointments()" :key="appt.id">
+            <tr>
+              <td class="px-4 py-2 text-sm">
+                <span x-show="appt.is_new" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">NEW</span>
+              </td>
+              <td class="px-4 py-2 text-sm" x-text="appt.id"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.patient_name"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.email"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.phone"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.service"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.date"></td>
+              <td class="px-4 py-2 text-sm" x-text="appt.time"></td>
+              <td class="px-4 py-2 text-sm font-semibold" :class="{
+                    'text-red-500': appt.status==='cancelled',
+                    'text-green-600': appt.status==='confirmed',
+                    'text-yellow-600': appt.status==='rescheduled',
+                    'text-gray-700': appt.status==='new'
+                  }" x-text="appt.status.toUpperCase()"></td>
+              <td class="px-4 py-2 flex space-x-1">
+                <button @click="confirmAppointment(appt)" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Confirm</button>
+                <button @click="rescheduleAppointment(appt)" class="bg-yellow-400 text-white px-2 py-1 rounded text-xs">Reschedule</button>
+                <button @click="cancelAppointment(appt)" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Cancel</button>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
     </div>
 
     <!-- Add Appointment Modal -->
     <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
         <h2 class="font-bold text-lg">Add New Appointment</h2>
-        <input type="text" x-model="newAppt.patient_name" placeholder="Patient Name" class="w-full border px-2 py-1 rounded"/>
+        <input type="text" x-model="newAppt.patient_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
         <input type="email" x-model="newAppt.email" placeholder="Email" class="w-full border px-2 py-1 rounded"/>
         <input type="text" x-model="newAppt.phone" placeholder="Phone" class="w-full border px-2 py-1 rounded"/>
         <input type="text" x-model="newAppt.service" placeholder="Service" class="w-full border px-2 py-1 rounded"/>
@@ -85,107 +111,113 @@
 </div>
 
 <script>
-  const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
 
-  function appointmentsSection() {
-    return {
-      activeTab: 'today',
-      appointments: [],
-      showAddForm: false,
-      newAppt: { patient_name:'', email:'', phone:'', service:'', date:'', time:'' },
-      newAppointmentsToday: 0,
-      newAppointmentsWeek: 0,
-      newAppointmentsMonth: 0,
+function appointmentsSection() {
+  return {
+    activeTab: 'today',
+    appointments: [],
+    showAddForm: false,
+    newAppt: { patient_name:'', email:'', phone:'', service:'', date:'', time:'' },
+    newAppointmentsToday: 0,
+    newAppointmentsWeek: 0,
+    newAppointmentsMonth: 0,
 
-      async init() {
-        await this.fetchAppointments();
-
-        // Real-time subscription
-        supabase.from('appointments').on('INSERT', payload => {
-          this.appointments.unshift(payload.new);
-          this.updateNewAppointments();
-        }).subscribe();
-      },
-
-      async fetchAppointments() {
-        const { data } = await supabase.from('appointments').select('*').order('date', {ascending:false});
-        this.appointments = data || [];
+    async init() {
+      await this.fetchAppointments();
+      // Real-time subscription
+      supabase.from('appointments').on('INSERT', payload => {
+        this.appointments.unshift(payload.new);
         this.updateNewAppointments();
-      },
+      }).subscribe();
+    },
 
-      filteredAppointments(period) {
-        const today = new Date();
-        const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
-        const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+    async fetchAppointments() {
+      const { data } = await supabase.from('appointments').select('*');
+      this.appointments = data || [];
+      this.updateNewAppointments();
+    },
 
-        return this.appointments.filter(a => {
-          const adate = new Date(a.date);
-          if(period==='today') return adate.toDateString() === today.toDateString();
-          if(period==='week') return adate > today && adate <= weekEnd;
-          if(period==='month') return adate > weekEnd && adate <= monthEnd;
-        });
-      },
+    sortedFilteredAppointments() {
+      return this.filteredAppointments(this.activeTab).sort((a,b)=>{
+        const dateA = new Date(a.date + ' ' + a.time);
+        const dateB = new Date(b.date + ' ' + b.time);
+        return dateB - dateA;
+      });
+    },
 
-      updateNewAppointments() {
-        const today = new Date();
-        const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
-        const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+    filteredAppointments(period) {
+      const today = new Date();
+      const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
+      const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+      return this.appointments.filter(a => {
+        const adate = new Date(a.date);
+        if(period==='today') return adate.toDateString() === today.toDateString();
+        if(period==='week') return adate > today && adate <= weekEnd;
+        if(period==='month') return adate > weekEnd && adate <= monthEnd;
+      });
+    },
 
-        this.newAppointmentsToday = this.appointments.filter(a=> new Date(a.date).toDateString()===today.toDateString() && a.is_new).length;
-        this.newAppointmentsWeek = this.appointments.filter(a=> new Date(a.date) > today && new Date(a.date) <= weekEnd && a.is_new).length;
-        this.newAppointmentsMonth = this.appointments.filter(a=> new Date(a.date) > weekEnd && new Date(a.date) <= monthEnd && a.is_new).length;
-      },
+    updateNewAppointments() {
+      const today = new Date();
+      const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
+      const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+      this.newAppointmentsToday = this.appointments.filter(a=> new Date(a.date).toDateString()===today.toDateString() && a.is_new).length;
+      this.newAppointmentsWeek = this.appointments.filter(a=> new Date(a.date) > today && new Date(a.date) <= weekEnd && a.is_new).length;
+      this.newAppointmentsMonth = this.appointments.filter(a=> new Date(a.date) > weekEnd && new Date(a.date) <= monthEnd && a.is_new).length;
+    },
 
-      confirmAppointment(appt) {
-        appt.status = 'confirmed';
+    confirmAppointment(appt) {
+      appt.status = 'confirmed';
+      appt.is_new = false;
+      this.updateNewAppointments();
+      supabase.from('appointments').update({status:'confirmed', is_new:false}).eq('id', appt.id);
+    },
+
+    rescheduleAppointment(appt) {
+      const newDate = prompt("Enter new date (YYYY-MM-DD):", appt.date);
+      const newTime = prompt("Enter new time (HH:MM):", appt.time);
+      if(newDate && newTime){
+        appt.date = newDate;
+        appt.time = newTime;
+        appt.status = 'rescheduled';
+        supabase.from('appointments').update({date:newDate, time:newTime, status:'rescheduled'}).eq('id', appt.id);
+      }
+    },
+
+    cancelAppointment(appt) {
+      if(confirm("Are you sure you want to cancel this appointment?")){
+        appt.status = 'cancelled';
         appt.is_new = false;
         this.updateNewAppointments();
-        supabase.from('appointments').update({status:'confirmed', is_new:false}).eq('id', appt.id);
-      },
-
-      rescheduleAppointment(appt) {
-        const newDate = prompt("Enter new date (YYYY-MM-DD):", appt.date);
-        const newTime = prompt("Enter new time (HH:MM):", appt.time);
-        if(newDate && newTime){
-          appt.date = newDate;
-          appt.time = newTime;
-          appt.status = 'rescheduled';
-          supabase.from('appointments').update({date:newDate, time:newTime, status:'rescheduled'}).eq('id', appt.id);
-        }
-      },
-
-      cancelAppointment(appt) {
-        if(confirm("Are you sure you want to cancel this appointment?")){
-          appt.status = 'cancelled';
-          appt.is_new = false;
-          this.updateNewAppointments();
-          supabase.from('appointments').update({status:'cancelled', is_new:false}).eq('id', appt.id);
-        }
-      },
-
-      async addAppointment() {
-        if(!this.newAppt.patient_name || !this.newAppt.email || !this.newAppt.phone || !this.newAppt.date || !this.newAppt.time) return alert("Please fill all fields");
-
-        const { data, error } = await supabase.from('appointments').insert([{
-          patient_name: this.newAppt.patient_name,
-          email: this.newAppt.email,
-          phone: this.newAppt.phone,
-          service: this.newAppt.service,
-          date: this.newAppt.date,
-          time: this.newAppt.time,
-          status: 'new',
-          is_new: true
-        }]);
-
-        if(error) return alert(error.message);
-
-        this.appointments.unshift(data[0]);
-        this.updateNewAppointments();
-        this.newAppt = { patient_name:'', email:'', phone:'', service:'', date:'', time:'' };
-        this.showAddForm = false;
+        supabase.from('appointments').update({status:'cancelled', is_new:false}).eq('id', appt.id);
       }
+    },
+
+    async addAppointment() {
+      if(!this.newAppt.patient_name || !this.newAppt.email || !this.newAppt.phone || !this.newAppt.date || !this.newAppt.time)
+        return alert("Please fill all fields");
+
+      const { data, error } = await supabase.from('appointments').insert([{
+        patient_name: this.newAppt.patient_name,
+        email: this.newAppt.email,
+        phone: this.newAppt.phone,
+        service: this.newAppt.service,
+        date: this.newAppt.date,
+        time: this.newAppt.time,
+        status: 'new',
+        is_new: true
+      }]);
+
+      if(error) return alert(error.message);
+
+      this.appointments.unshift(data[0]);
+      this.updateNewAppointments();
+      this.newAppt = { patient_name:'', email:'', phone:'', service:'', date:'', time:'' };
+      this.showAddForm = false;
     }
   }
+}
 </script>
 
 </body>
