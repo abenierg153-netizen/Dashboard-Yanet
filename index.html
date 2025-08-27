@@ -7,8 +7,6 @@
     <title>Yanet Dental Clinic Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://unpkg.com/htmx.org@1.7.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gray-100">
@@ -21,7 +19,9 @@
                 <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
             </div>
             <div class="flex items-center space-x-4">
-                <button class="text-gray-600 hover:text-blue-600">🔔</button>
+                <button class="text-gray-600 hover:text-blue-600">
+                    🔔 <span x-text="upcomingAppointments.length"></span>
+                </button>
                 <button class="text-gray-600 hover:text-blue-600">👤</button>
             </div>
         </div>
@@ -45,121 +45,185 @@
             <h2 class="text-lg font-semibold">Upcoming Appointments</h2>
             <ul>
                 <template x-for="appt in upcomingAppointments" :key="appt.id">
-                    <li x-text="`${appt.name} - ${appt.time}`"></li>
+                    <li x-text="appt.name + ' - ' + appt.time"></li>
                 </template>
             </ul>
         </div>
     </section>
 
-    <!-- Charts Section -->
-    <section class="container mx-auto p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold mb-2">Revenue Chart</h3>
-            <canvas id="revenueChart" class="h-32"></canvas>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold mb-2">Appointments Chart</h3>
-            <canvas id="appointmentsChart" class="h-32"></canvas>
-        </div>
-        <div class="bg-white p-4 rounded-lg shadow">
-            <h3 class="font-semibold mb-2">Patient Growth</h3>
-            <canvas id="patientChart" class="h-32"></canvas>
+    <!-- AI Insights -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">AI Insights</h2>
+        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200 space-y-2">
+            <template x-for="insight in aiInsights" :key="insight.id">
+                <div class="flex items-start space-x-2">
+                    <span class="text-purple-600 font-bold">✨</span>
+                    <p class="text-gray-700" x-text="insight.text"></p>
+                </div>
+            </template>
         </div>
     </section>
 
-    <!-- Appointments Section with htmx -->
+    <!-- Appointments Section -->
     <section class="container mx-auto p-4">
         <h2 class="text-lg font-semibold mb-4">Appointments</h2>
-        <div class="flex justify-between mb-4">
-            <button @click="view='daily'" :class="view=='daily'? 'bg-blue-600 text-white':'bg-gray-200'" class="px-4 py-2 rounded">Daily</button>
-            <button @click="view='weekly'" :class="view=='weekly'? 'bg-blue-600 text-white':'bg-gray-200'" class="px-4 py-2 rounded">Weekly</button>
+
+        <!-- Filters & Search -->
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 space-y-2 sm:space-y-0">
+            <div class="flex space-x-2">
+                <select x-model="filterDentist" class="px-3 py-2 border rounded-lg">
+                    <option value="">All Dentists</option>
+                    <option>Dr. Smith</option>
+                    <option>Dr. Lee</option>
+                </select>
+                <select x-model="filterService" class="px-3 py-2 border rounded-lg">
+                    <option value="">All Services</option>
+                    <option>Cleaning</option>
+                    <option>Whitening</option>
+                </select>
+            </div>
+            <input type="text" x-model="searchPatient" placeholder="Search patient..." class="border px-3 py-2 rounded-lg">
         </div>
-        <div hx-get="/appointments?view=daily" hx-trigger="load" hx-target="#appointmentsTable" hx-swap="innerHTML">
-            <table class="min-w-full bg-white border">
-                <thead>
-                    <tr>
-                        <th class="border px-4 py-2">Time</th>
-                        <th class="border px-4 py-2">Patient Name</th>
-                        <th class="border px-4 py-2">Service</th>
-                        <th class="border px-4 py-2">Status</th>
-                        <th class="border px-4 py-2">Dentist</th>
-                        <th class="border px-4 py-2">Action</th>
+
+        <!-- Appointments Table -->
+        <table class="min-w-full bg-white border">
+            <thead>
+                <tr>
+                    <th class="border px-4 py-2">Time</th>
+                    <th class="border px-4 py-2">Patient Name</th>
+                    <th class="border px-4 py-2">Service</th>
+                    <th class="border px-4 py-2">Status</th>
+                    <th class="border px-4 py-2">Dentist</th>
+                    <th class="border px-4 py-2">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="appt in filteredAppointments()" :key="appt.id">
+                    <tr class="hover:bg-gray-50">
+                        <td class="border px-4 py-2" x-text="appt.time"></td>
+                        <td class="border px-4 py-2" x-text="appt.name"></td>
+                        <td class="border px-4 py-2" x-text="appt.service"></td>
+                        <td class="border px-4 py-2">
+                            <span :class="statusColor(appt.status)" class="px-2 py-1 rounded-full text-xs font-semibold" x-text="appt.status"></span>
+                        </td>
+                        <td class="border px-4 py-2" x-text="appt.dentist"></td>
+                        <td class="border px-4 py-2 space-x-1">
+                            <button @click="updateStatus(appt, 'Confirmed')" class="text-green-600">✔️</button>
+                            <button @click="updateStatus(appt, 'Pending')" class="text-yellow-600">⏳</button>
+                            <button @click="updateStatus(appt, 'Cancelled')" class="text-red-600">❌</button>
+                        </td>
                     </tr>
-                </thead>
-                <tbody id="appointmentsTable">
-                    <!-- Live appointments via htmx -->
-                </tbody>
-            </table>
+                </template>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Patients Section -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Patients</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold">Total Patients</h3>
+            <p class="text-2xl" x-text="patients.total"></p>
+            <h3 class="font-semibold">New vs Returning</h3>
+            <div class="h-32 bg-gray-200"></div>
         </div>
     </section>
 
-    <!-- Floating Add Appointment Button -->
-    <button @click="openModal=true" class="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-full shadow-lg hover:bg-blue-700 transition">+ New Appointment</button>
+    <!-- Revenue Section -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Revenue</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold">Revenue Today</h3>
+            <p class="text-2xl" x-text="summary.todayRevenue"></p>
+            <h3 class="font-semibold">Revenue by Service</h3>
+            <div class="h-32 bg-gray-200"></div>
+        </div>
+    </section>
 
-    <!-- Modal -->
-    <div x-show="openModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-        <div class="bg-white p-6 rounded shadow-lg w-96">
-            <h3 class="font-semibold mb-4">Add New Appointment</h3>
-            <input type="text" placeholder="Patient Name" class="w-full border p-2 rounded mb-2" x-model="newAppt.name">
-            <input type="time" class="w-full border p-2 rounded mb-2" x-model="newAppt.time">
-            <input type="text" placeholder="Service" class="w-full border p-2 rounded mb-2" x-model="newAppt.service">
-            <div class="flex justify-end space-x-2">
-                <button @click="openModal=false" class="px-4 py-2 rounded bg-gray-200">Cancel</button>
-                <button @click="addAppointment()" class="px-4 py-2 rounded bg-blue-600 text-white">Add</button>
-            </div>
+    <!-- Feedback Section -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Feedback</h2>
+        <ul class="bg-white p-4 rounded-lg shadow">
+            <template x-for="fb in feedbacks" :key="fb.id">
+                <li class="border-b py-2" x-text="fb.patient + ' - ⭐'.repeat(fb.rating) + ' - ' + fb.comment"></li>
+            </template>
+        </ul>
+    </section>
+
+    <!-- Staff Performance Section -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Staff Performance</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold">Appointments per Staff</h3>
+            <div class="h-32 bg-gray-200"></div>
+            <h3 class="font-semibold">Revenue per Dentist</h3>
+            <div class="h-32 bg-gray-200"></div>
+        </div>
+    </section>
+
+    <!-- Settings Section -->
+    <section class="container mx-auto p-4">
+        <h2 class="text-lg font-semibold mb-4">Settings</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="font-semibold">Clinic Info</h3>
+            <p>Address: 123 Dental St.</p>
+            <p>Contact: (123) 456-7890</p>
+            <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
+        </div>
+    </section>
+
+    <!-- Bottom Sticky Menu -->
+    <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden">
+        <div class="flex justify-around">
+            <button class="text-gray-600 hover:text-blue-600">Dashboard</button>
+            <button class="text-gray-600 hover:text-blue-600">Appointments</button>
+            <button class="text-gray-600 hover:text-blue-600">Patients</button>
+            <button class="text-gray-600 hover:text-blue-600">Revenue</button>
+            <button class="text-gray-600 hover:text-blue-600">Reports</button>
+            <button class="text-gray-600 hover:text-blue-600">Settings</button>
         </div>
     </div>
 
+    <!-- Alpine.js Data -->
     <script>
         function dashboardData() {
             return {
-                summary: {
-                    todayAppointments: 5,
-                    todayRevenue: "$1,200",
-                    newPatients: 3
-                },
+                summary: { todayAppointments: 5, todayRevenue: "$1,200", newPatients: 3 },
                 upcomingAppointments: [
-                    { id: 1, name: 'John Doe', time: '10:00 AM' },
-                    { id: 2, name: 'Jane Smith', time: '11:30 AM' }
+                    { id: 1, name: 'John Doe', time: '10:00 AM', service: 'Cleaning', dentist: 'Dr. Smith', status: 'Confirmed' },
+                    { id: 2, name: 'Jane Smith', time: '11:30 AM', service: 'Whitening', dentist: 'Dr. Lee', status: 'Pending' }
                 ],
-                openModal: false,
-                newAppt: { name: '', time: '', service: '' },
-                view: 'daily',
-                addAppointment() {
-                    if(this.newAppt.name && this.newAppt.time){
-                        this.upcomingAppointments.push({...this.newAppt, id: Date.now()});
-                        this.newAppt = { name: '', time: '', service: '' };
-                        this.openModal = false;
-                    }
+                patients: { total: 150 },
+                aiInsights: [
+                    { id: 1, text: "Facial treatments are trending, consider promoting them." },
+                    { id: 2, text: "3 appointments today have high no-show risk." },
+                    { id: 3, text: "Revenue predicted to increase by 10% next week." }
+                ],
+                feedbacks: [
+                    { id: 1, patient: "John Doe", rating: 4, comment: "Great experience!" },
+                    { id: 2, patient: "Jane Smith", rating: 3, comment: "Good service." }
+                ],
+                filterDentist: '',
+                filterService: '',
+                searchPatient: '',
+                filteredAppointments() {
+                    return this.upcomingAppointments.filter(a =>
+                        (this.filterDentist === '' || a.dentist === this.filterDentist) &&
+                        (this.filterService === '' || a.service === this.filterService) &&
+                        a.name.toLowerCase().includes(this.searchPatient.toLowerCase())
+                    );
+                },
+                statusColor(status) {
+                    return status === 'Confirmed' ? 'bg-green-100 text-green-800' :
+                        status === 'Pending' ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800';
+                },
+                updateStatus(appt, status) {
+                    appt.status = status;
                 }
             }
         }
-
-        // Chart.js Setup
-        const revenueChart = new Chart(document.getElementById('revenueChart'), {
-            type: 'line',
-            data: {
-                labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-                datasets: [{ label: 'Revenue', data: [1200, 1500, 1000, 1800, 2000, 2200, 1700], backgroundColor:'rgba(59,130,246,0.2)', borderColor:'#3b82f6', borderWidth:2 }]
-            }
-        });
-
-        const appointmentsChart = new Chart(document.getElementById('appointmentsChart'), {
-            type: 'bar',
-            data: {
-                labels: ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
-                datasets: [{ label: 'Appointments', data: [5,7,6,8,5,9,4], backgroundColor:'#10b981' }]
-            }
-        });
-
-        const patientChart = new Chart(document.getElementById('patientChart'), {
-            type: 'line',
-            data: {
-                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
-                datasets: [{ label: 'New Patients', data: [10,12,9,15,14,18,20], backgroundColor:'rgba(236,72,153,0.2)', borderColor:'#ec4899', borderWidth:2 }]
-            }
-        });
     </script>
-</body>
 
+</body>
 </html>
