@@ -31,64 +31,64 @@
     </div>
   </div>
 </header>
-<!-- Dental Theme Cards (Blue Shades) -->
-<div class="max-w-5xl mx-auto px-4 py-6">
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+<!-- Compact Dental Dashboard Cards -->
+<div class="max-w-4xl mx-auto px-4 py-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
     <!-- Dashboard -->
     <div @click="activeSection = 'dashboard'" 
-         :class="activeSection === 'dashboard' ? 'bg-blue-700 text-white' : 'bg-blue-200 text-blue-800 hover:bg-blue-300'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-chart-line text-3xl mb-2"></i>
-      <span class="font-semibold">Dashboard</span>
+         :class="activeSection === 'dashboard' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-chart-line text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Dashboard</span>
     </div>
 
     <!-- Appointments -->
     <div @click="activeSection = 'appointments'" 
          :class="activeSection === 'appointments' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-calendar-alt text-3xl mb-2"></i>
-      <span class="font-semibold">Appointments</span>
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-calendar-alt text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Appointments</span>
     </div>
 
     <!-- Patients -->
     <div @click="activeSection = 'patients'" 
-         :class="activeSection === 'patients' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-users text-3xl mb-2"></i>
-      <span class="font-semibold">Patients</span>
+         :class="activeSection === 'patients' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-users text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Patients</span>
     </div>
 
     <!-- Billing -->
     <div @click="activeSection = 'billing'" 
          :class="activeSection === 'billing' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-file-invoice-dollar text-3xl mb-2"></i>
-      <span class="font-semibold">Billing</span>
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-file-invoice-dollar text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Billing</span>
     </div>
 
     <!-- Reports -->
     <div @click="activeSection = 'reports'" 
-         :class="activeSection === 'reports' ? 'bg-blue-700 text-white' : 'bg-blue-200 text-blue-800 hover:bg-blue-300'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-chart-pie text-3xl mb-2"></i>
-      <span class="font-semibold">Reports</span>
+         :class="activeSection === 'reports' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-chart-pie text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Reports</span>
     </div>
 
     <!-- Settings -->
     <div @click="activeSection = 'settings'" 
-         :class="activeSection === 'settings' ? 'bg-blue-500 text-white' : 'bg-blue-50 text-blue-800 hover:bg-blue-100'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-cog text-3xl mb-2"></i>
-      <span class="font-semibold">Settings</span>
+         :class="activeSection === 'settings' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-cog text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Settings</span>
     </div>
 
     <!-- Support -->
     <div @click="activeSection = 'support'" 
          :class="activeSection === 'support' ? 'bg-blue-600 text-white' : 'bg-blue-100 text-blue-800 hover:bg-blue-200'"
-         class="flex flex-col items-center justify-center p-6 rounded-xl shadow cursor-pointer transition">
-      <i class="fas fa-life-ring text-3xl mb-2"></i>
-      <span class="font-semibold">Support</span>
+         class="flex flex-col items-center justify-center p-4 rounded-lg shadow cursor-pointer transition">
+      <i class="fas fa-life-ring text-2xl mb-1"></i>
+      <span class="font-semibold text-sm">Support</span>
     </div>
 
   </div>
