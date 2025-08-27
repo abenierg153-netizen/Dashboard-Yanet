@@ -293,3 +293,199 @@ function dashboard() {
   }
 }
 </script>
+<div x-data="dashboardModules()" x-init="initModules()" class="p-4 space-y-4">
+
+  <!-- Top buttons for modules -->
+  <div class="flex space-x-4">
+    <button @click="activeModule='appointments'" 
+            :class="activeModule==='appointments'? 'bg-blue-700 text-white' : 'bg-blue-500 text-white'"
+            class="px-3 py-2 rounded">Appointments</button>
+
+    <button @click="activeModule='patients'" 
+            :class="activeModule==='patients'? 'bg-green-700 text-white' : 'bg-green-500 text-white'"
+            class="px-3 py-2 rounded">Patients</button>
+  </div>
+
+  <!-- Appointments Section -->
+  <div x-show="activeModule==='appointments'" 
+       x-transition:enter="transition ease-out duration-300" 
+       x-transition:enter-start="opacity-0 transform -translate-y-4" 
+       x-transition:enter-end="opacity-100 transform translate-y-0" 
+       x-transition:leave="transition ease-in duration-200" 
+       x-transition:leave-start="opacity-100 transform translate-y-0" 
+       x-transition:leave-end="opacity-0 transform -translate-y-4">
+
+    <div x-data="appointmentsSection()" x-init="init()" class="space-y-4">
+
+      <!-- Tabs for periods -->
+      <div class="flex space-x-4 border-b border-gray-200">
+        <button @click="activeTab='today'" 
+                :class="activeTab==='today' ? 'border-b-2 border-blue-500 font-semibold' : ''"
+                class="py-2 px-4">
+          Today <span x-show="newAppointmentsToday > 0" x-text="newAppointmentsToday" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+        </button>
+        <button @click="activeTab='week'" 
+                :class="activeTab==='week' ? 'border-b-2 border-blue-500 font-semibold' : ''"
+                class="py-2 px-4">
+          This Week <span x-show="newAppointmentsWeek > 0" x-text="newAppointmentsWeek" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+        </button>
+        <button @click="activeTab='month'" 
+                :class="activeTab==='month' ? 'border-b-2 border-blue-500 font-semibold' : ''"
+                class="py-2 px-4">
+          This Month <span x-show="newAppointmentsMonth > 0" x-text="newAppointmentsMonth" class="ml-1 bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full"></span>
+        </button>
+      </div>
+
+      <!-- Appointments List -->
+      <div class="space-y-3">
+        <template x-for="appt in filteredAppointments(activeTab)" :key="appt.id">
+          <div class="p-3 border rounded flex justify-between items-center bg-white shadow-sm">
+            <div>
+              <div class="font-bold text-gray-800" x-text="appt.patient_name"></div>
+              <div class="text-gray-500 text-sm" x-text="appt.service + ' | ' + appt.time + ' | ' + appt.date"></div>
+            </div>
+            <div class="flex items-center space-x-2">
+              <div :class="appt.is_new ? 'bg-red-500 text-white px-2 py-1 rounded text-xs font-bold' : ''"
+                   x-text="appt.is_new ? 'NEW' : ''"></div>
+
+              <button @click="confirmAppointment(appt)" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Confirm</button>
+              <button @click="rescheduleAppointment(appt)" class="bg-yellow-400 text-white px-2 py-1 rounded text-xs">Reschedule</button>
+              <button @click="cancelAppointment(appt)" class="bg-red-500 text-white px-2 py-1 rounded text-xs">Cancel</button>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <!-- Add new appointment modal -->
+      <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+        <div class="bg-white rounded shadow-lg w-96 p-6 space-y-4">
+          <h2 class="font-bold text-lg">Add New Appointment</h2>
+          <input type="text" x-model="newAppt.patient_name" placeholder="Patient Name" class="w-full border px-2 py-1 rounded"/>
+          <input type="text" x-model="newAppt.service" placeholder="Service" class="w-full border px-2 py-1 rounded"/>
+          <input type="date" x-model="newAppt.date" class="w-full border px-2 py-1 rounded"/>
+          <input type="time" x-model="newAppt.time" class="w-full border px-2 py-1 rounded"/>
+          <div class="flex justify-end space-x-2">
+            <button @click="showAddForm=false" class="px-3 py-1 border rounded">Cancel</button>
+            <button @click="addAppointment()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add appointment button -->
+      <button @click="showAddForm=true" class="px-4 py-2 bg-blue-500 text-white rounded shadow">+ Add Appointment</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+
+function dashboardModules() {
+  return {
+    activeModule: '',
+
+    initModules() {
+      // You can initialize other module-related code here if needed
+    }
+  }
+}
+
+function appointmentsSection() {
+  return {
+    activeTab: 'today',
+    appointments: [],
+    showAddForm: false,
+    newAppt: { patient_name:'', service:'', date:'', time:'' },
+    newAppointmentsToday: 0,
+    newAppointmentsWeek: 0,
+    newAppointmentsMonth: 0,
+
+    async init() {
+      await this.fetchAppointments();
+
+      // Real-time subscription
+      supabase.from('appointments').on('INSERT', payload => {
+        this.appointments.push(payload.new);
+        this.updateNewAppointments();
+      }).subscribe();
+    },
+
+    async fetchAppointments() {
+      const { data } = await supabase.from('appointments').select('*');
+      this.appointments = data || [];
+      this.updateNewAppointments();
+    },
+
+    filteredAppointments(period) {
+      const today = new Date();
+      const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
+      const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+
+      return this.appointments.filter(a => {
+        const adate = new Date(a.date);
+        if(period==='today') return adate.toDateString() === today.toDateString();
+        if(period==='week') return adate > today && adate <= weekEnd;
+        if(period==='month') return adate > weekEnd && adate <= monthEnd;
+      });
+    },
+
+    updateNewAppointments() {
+      const today = new Date();
+      const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
+      const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
+
+      this.newAppointmentsToday = this.appointments.filter(a=> new Date(a.date).toDateString()===today.toDateString() && a.is_new).length;
+      this.newAppointmentsWeek = this.appointments.filter(a=> new Date(a.date) > today && new Date(a.date) <= weekEnd && a.is_new).length;
+      this.newAppointmentsMonth = this.appointments.filter(a=> new Date(a.date) > weekEnd && new Date(a.date) <= monthEnd && a.is_new).length;
+    },
+
+    confirmAppointment(appt) {
+      appt.status = 'confirmed';
+      appt.is_new = false;
+      this.updateNewAppointments();
+      supabase.from('appointments').update({status:'confirmed', is_new:false}).eq('id', appt.id);
+    },
+
+    rescheduleAppointment(appt) {
+      const newDate = prompt("Enter new date (YYYY-MM-DD):", appt.date);
+      const newTime = prompt("Enter new time (HH:MM):", appt.time);
+      if(newDate && newTime){
+        appt.date = newDate;
+        appt.time = newTime;
+        appt.status = 'rescheduled';
+        supabase.from('appointments').update({date:newDate, time:newTime, status:'rescheduled'}).eq('id', appt.id);
+      }
+    },
+
+    cancelAppointment(appt) {
+      if(confirm("Are you sure you want to cancel this appointment?")){
+        appt.status = 'cancelled';
+        appt.is_new = false;
+        this.updateNewAppointments();
+        supabase.from('appointments').update({status:'cancelled', is_new:false}).eq('id', appt.id);
+      }
+    },
+
+    async addAppointment() {
+      if(!this.newAppt.patient_name || !this.newAppt.date || !this.newAppt.time) return alert("Fill all fields");
+
+      const { data, error } = await supabase.from('appointments').insert([{
+        patient_name: this.newAppt.patient_name,
+        service: this.newAppt.service,
+        date: this.newAppt.date,
+        time: this.newAppt.time,
+        status: 'new',
+        is_new: true
+      }]);
+
+      if(error) return alert(error.message);
+
+      this.appointments.push(data[0]);
+      this.updateNewAppointments();
+      this.newAppt = { patient_name:'', service:'', date:'', time:'' };
+      this.showAddForm = false;
+    }
+  }
+}
+</script>
