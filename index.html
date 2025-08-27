@@ -1,172 +1,202 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ activeSection: 'dashboard', viewMode: 'grid' }">
-
+<html lang="en" x-data="dashboardApp()">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Yanet Dental Clinic Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/htmx.org@1.7.0"></script>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-
 <body class="bg-gray-100">
 
-    <!-- Header -->
-    <header class="bg-white shadow">
-        <div class="container mx-auto flex justify-between items-center p-4">
-            <div class="flex items-center">
-                <img src="logo.png" alt="Yanet Dental Clinic" class="h-8">
-                <h1 class="ml-2 text-xl font-bold">Yanet Dental Clinic</h1>
-            </div>
-            <div class="flex items-center space-x-4">
-                <button class="text-gray-600 hover:text-blue-600">🔔</button>
-                <button class="text-gray-600 hover:text-blue-600">👤</button>
-            </div>
+<!-- Top Navigation Cards -->
+<section class="container mx-auto p-4 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
+    <template x-for="card in navCards" :key="card.id">
+        <div 
+            @click="activeSection = card.id"
+            :class="activeSection === card.id ? 'bg-blue-600 text-white' : 'bg-white text-gray-900'"
+            class="cursor-pointer p-4 rounded-lg shadow flex flex-col items-center hover:shadow-lg transition">
+            <div class="text-2xl font-bold" x-text="card.value"></div>
+            <div class="text-sm mt-1" x-text="card.name"></div>
         </div>
-    </header>
+    </template>
+</section>
 
-    <!-- Sticky Bottom Menu -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden">
-        <div class="flex justify-around">
-            <button @click="activeSection='dashboard'" :class="activeSection==='dashboard'?'text-blue-600 font-bold':'text-gray-600'">Dashboard</button>
-            <button @click="activeSection='appointments'" :class="activeSection==='appointments'?'text-blue-600 font-bold':'text-gray-600'">Appointments</button>
-            <button @click="activeSection='patients'" :class="activeSection==='patients'?'text-blue-600 font-bold':'text-gray-600'">Patients</button>
-            <button @click="activeSection='reports'" :class="activeSection==='reports'?'text-blue-600 font-bold':'text-gray-600'">Reports</button>
-            <button @click="activeSection='settings'" :class="activeSection==='settings'?'text-blue-600 font-bold':'text-gray-600'">Settings</button>
-            <button @click="activeSection='service'" :class="activeSection==='service'?'text-blue-600 font-bold':'text-gray-600'">Service</button>
-            <button @click="activeSection='feedback'" :class="activeSection==='feedback'?'text-blue-600 font-bold':'text-gray-600'">Feedback</button>
-        </div>
-    </div>
-
+<!-- Main Sections -->
+<section class="container mx-auto p-4">
     <!-- Dashboard Section -->
-    <section x-show="activeSection==='dashboard'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Dashboard Overview</h2>
-        <!-- Live Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div x-show="activeSection === 'dashboard'" class="space-y-6">
+        <h2 class="text-xl font-bold">Dashboard Overview</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="font-semibold">Appointments Today</h3>
-                <p class="text-2xl" hx-get="/api/appointments/today" hx-trigger="load" hx-target="#appt-today">5</p>
+                <p class="text-2xl">5</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">New Patients Today</h3>
-                <p class="text-2xl" hx-get="/api/patients/new" hx-trigger="load" hx-target="#new-patients">3</p>
+                <h3 class="font-semibold">New Patients</h3>
+                <p class="text-2xl">3</p>
             </div>
             <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">High-Demand Services</h3>
-                <ul hx-get="/api/services/high-demand" hx-trigger="load" hx-target="#high-demand">
-                    <li>Cleaning</li>
-                    <li>Whitening</li>
-                </ul>
-            </div>
-            <div class="bg-white p-4 rounded-lg shadow">
-                <h3 class="font-semibold">No-Show Predictions</h3>
-                <p hx-get="/api/appointments/no-shows" hx-trigger="load" hx-target="#no-shows">2 potential</p>
+                <h3 class="font-semibold">AI Insight</h3>
+                <p class="text-sm text-gray-700">High demand for Whitening Services today.</p>
             </div>
         </div>
-    </section>
+        <div class="mt-4 bg-white p-4 rounded-lg shadow h-40 flex items-center justify-center text-gray-400">Revenue & Growth Chart Placeholder</div>
+    </div>
 
     <!-- Appointments Section -->
-    <section x-show="activeSection==='appointments'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Appointments</h2>
-        <!-- Quick Action Buttons -->
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded">Confirm All</button>
-            <button class="bg-red-600 text-white px-4 py-2 rounded">Cancel Selected</button>
-            <button class="bg-green-600 text-white px-4 py-2 rounded">Call Patient</button>
+    <div x-show="activeSection === 'appointments'" class="space-y-4">
+        <h2 class="text-xl font-bold">Appointments</h2>
+        <div class="flex space-x-2 mb-2">
+            <button class="px-4 py-2 bg-blue-600 text-white rounded">Daily</button>
+            <button class="px-4 py-2 bg-gray-200 rounded">Weekly</button>
         </div>
-        <!-- Appointment Table -->
-        <div class="bg-white shadow rounded overflow-x-auto">
-            <table class="min-w-full">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-4 py-2">Time</th>
-                        <th class="px-4 py-2">Patient</th>
-                        <th class="px-4 py-2">Service</th>
-                        <th class="px-4 py-2">Status</th>
-                        <th class="px-4 py-2">Dentist</th>
-                        <th class="px-4 py-2">Action</th>
-                    </tr>
-                </thead>
-                <tbody hx-get="/api/appointments" hx-trigger="load" hx-target="#appointments-body" id="appointments-body">
-                    <tr>
-                        <td class="border px-4 py-2">10:00 AM</td>
-                        <td class="border px-4 py-2">John Doe</td>
-                        <td class="border px-4 py-2">Cleaning</td>
-                        <td class="border px-4 py-2 text-green-500">Confirmed</td>
-                        <td class="border px-4 py-2">Dr. Smith</td>
-                        <td class="border px-4 py-2 flex gap-2">
-                            <button class="text-blue-600">Confirm</button>
-                            <button class="text-red-600">Cancel</button>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
+        <table class="min-w-full bg-white border rounded-lg">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-4 py-2 border">Time</th>
+                    <th class="px-4 py-2 border">Patient Name</th>
+                    <th class="px-4 py-2 border">Service</th>
+                    <th class="px-4 py-2 border">Status</th>
+                    <th class="px-4 py-2 border">Dentist</th>
+                    <th class="px-4 py-2 border">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="px-4 py-2 border">10:00 AM</td>
+                    <td class="px-4 py-2 border">John Doe</td>
+                    <td class="px-4 py-2 border">Cleaning</td>
+                    <td class="px-4 py-2 border text-green-600">Confirmed</td>
+                    <td class="px-4 py-2 border">Dr. Smith</td>
+                    <td class="px-4 py-2 border flex space-x-2">
+                        <button class="text-blue-600">Confirm</button>
+                        <button class="text-red-600">Cancel</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="px-4 py-2 border">11:30 AM</td>
+                    <td class="px-4 py-2 border">Jane Smith</td>
+                    <td class="px-4 py-2 border">Whitening</td>
+                    <td class="px-4 py-2 border text-yellow-600">Pending</td>
+                    <td class="px-4 py-2 border">Dr. Brown</td>
+                    <td class="px-4 py-2 border flex space-x-2">
+                        <button class="text-blue-600">Confirm</button>
+                        <button class="text-red-600">Cancel</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <!-- Patients Section -->
-    <section x-show="activeSection==='patients'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Patients</h2>
-        <div class="bg-white shadow rounded p-4">
-            <h3 class="font-semibold">Total Patients</h3>
-            <p class="text-2xl" hx-get="/api/patients/count" hx-trigger="load" hx-target="#total-patients">150</p>
-            <h3 class="font-semibold mt-4">New vs Returning</h3>
-            <div class="h-32 bg-gray-200 mt-2"></div>
+    <div x-show="activeSection === 'patients'" class="space-y-4">
+        <h2 class="text-xl font-bold">Patients</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">Total Patients</h3>
+                <p class="text-2xl">150</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">New Patients</h3>
+                <p class="text-2xl">10</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">Returning Patients</h3>
+                <p class="text-2xl">140</p>
+            </div>
         </div>
-    </section>
+        <div class="mt-4 bg-white p-4 rounded-lg shadow h-40 flex items-center justify-center text-gray-400">Patient Growth Chart Placeholder</div>
+    </div>
 
     <!-- Reports Section -->
-    <section x-show="activeSection==='reports'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Reports</h2>
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Appointments</button>
-            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Patients</button>
-            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export Feedback</button>
+    <div x-show="activeSection === 'reports'" class="space-y-4">
+        <h2 class="text-xl font-bold">Reports</h2>
+        <div class="flex space-x-2 mb-4">
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Export CSV</button>
+            <button class="bg-gray-200 px-4 py-2 rounded">Export PDF</button>
         </div>
-        <div class="bg-white shadow rounded p-4 h-64">
-            <p class="text-gray-500">Reports chart placeholder</p>
-        </div>
-    </section>
+        <div class="bg-white p-4 rounded-lg shadow h-48 flex items-center justify-center text-gray-400">Reports Chart Placeholder</div>
+    </div>
 
     <!-- Settings Section -->
-    <section x-show="activeSection==='settings'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Settings</h2>
-        <div class="bg-white shadow rounded p-4">
+    <div x-show="activeSection === 'settings'" class="space-y-4">
+        <h2 class="text-xl font-bold">Settings & Staff Performance</h2>
+        <div class="bg-white p-4 rounded-lg shadow">
             <h3 class="font-semibold">Clinic Info</h3>
             <p>Address: 123 Dental St.</p>
             <p>Contact: (123) 456-7890</p>
             <p>Hours: Mon-Fri, 9 AM - 5 PM</p>
-
-            <h3 class="font-semibold mt-4">Staff Performance</h3>
-            <div class="h-32 bg-gray-200 mt-2"></div>
         </div>
-    </section>
+        <div class="bg-white p-4 rounded-lg shadow h-40 mt-4 flex items-center justify-center text-gray-400">Staff Performance Chart Placeholder</div>
+    </div>
 
     <!-- Service Section -->
-    <section x-show="activeSection==='service'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Services</h2>
-        <div class="flex flex-wrap gap-2 mb-4">
-            <button class="bg-green-600 text-white px-4 py-2 rounded">Add Service</button>
-            <button class="bg-gray-200 px-4 py-2 rounded">Toggle Grid/List</button>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div class="bg-white shadow rounded p-4">
+    <div x-show="activeSection === 'service'" class="space-y-4">
+        <h2 class="text-xl font-bold">Services</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white p-4 rounded-lg shadow">
                 <h3 class="font-semibold">Cleaning</h3>
-                <p>Price: $120</p>
-                <p>Duration: 60 min</p>
+                <p class="text-gray-700">Popular service</p>
+                <p class="text-green-600">45 bookings</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">Whitening</h3>
+                <p class="text-gray-700">High demand today</p>
+                <p class="text-green-600">30 bookings</p>
+            </div>
+            <div class="bg-white p-4 rounded-lg shadow">
+                <h3 class="font-semibold">Filling</h3>
+                <p class="text-gray-700">Moderate demand</p>
+                <p class="text-green-600">20 bookings</p>
             </div>
         </div>
-    </section>
+    </div>
 
     <!-- Feedback Section -->
-    <section x-show="activeSection==='feedback'" class="container mx-auto p-4">
-        <h2 class="text-2xl font-bold mb-4">Feedback</h2>
-        <ul class="bg-white shadow rounded p-4">
+    <div x-show="activeSection === 'feedback'" class="space-y-4">
+        <h2 class="text-xl font-bold">Patient Feedback</h2>
+        <ul class="bg-white p-4 rounded-lg shadow space-y-2">
             <li class="border-b py-2">John Doe - ⭐⭐⭐⭐ - Great experience!</li>
             <li class="border-b py-2">Jane Smith - ⭐⭐⭐ - Good service.</li>
+            <li class="border-b py-2">Mark Wilson - ⭐⭐⭐⭐⭐ - Excellent staff!</li>
         </ul>
-    </section>
+    </div>
+</section>
+
+<!-- Sticky Mobile Menu -->
+<div class="fixed bottom-0 left-0 right-0 bg-white shadow-lg p-2 md:hidden">
+    <div class="flex justify-around">
+        <template x-for<template x-for="card in navCards" :key="card.id">
+            <button
+                @click="activeSection = card.id"
+                :class="activeSection === card.id ? 'text-blue-600 font-bold' : 'text-gray-600'"
+                class="flex flex-col items-center text-sm">
+                <span x-text="card.icon"></span>
+                <span x-text="card.name"></span>
+            </button>
+        </template>
+    </div>
+</div>
+
+<!-- Alpine.js Data Script -->
+<script>
+function dashboardApp() {
+    return {
+        activeSection: 'dashboard',
+        navCards: [
+            { id: 'dashboard', name: 'Dashboard', value: '', icon: '📊' },
+            { id: 'appointments', name: 'Appointments', value: '', icon: '📅' },
+            { id: 'patients', name: 'Patients', value: '', icon: '🧑‍🤝‍🧑' },
+            { id: 'reports', name: 'Reports', value: '', icon: '📈' },
+            { id: 'settings', name: 'Settings', value: '', icon: '⚙️' },
+            { id: 'service', name: 'Service', value: '', icon: '🦷' },
+            { id: 'feedback', name: 'Feedback', value: '', icon: '💬' },
+        ]
+    }
+}
+</script>
 
 </body>
 </html>
