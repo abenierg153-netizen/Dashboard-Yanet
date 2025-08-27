@@ -1,87 +1,90 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ sidebarOpen: false, activeTab: 'home' }" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Abenier Dashboard</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Abenier Landing</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <!-- Alpine.js for small interactivity -->
+  <script src="https://unpkg.com/alpinejs" defer></script>
 </head>
-<body class="bg-gray-100 flex h-screen font-sans">
+<body class="bg-gray-50 text-gray-800">
 
-  <!-- Sidebar -->
-  <aside class="bg-white w-64 shadow-lg fixed h-full transform transition-transform duration-200"
-         :class="sidebarOpen ? 'translate-x-0' : '-translate-x-64'">
-    <div class="p-6 font-bold text-xl border-b">Abenier</div>
-    <nav class="p-4 space-y-2">
-      <button @click="activeTab='home'" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100"
-              :class="activeTab==='home' && 'bg-blue-100 text-blue-700'">🏠 Home</button>
-      <button @click="activeTab='sales'" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100"
-              :class="activeTab==='sales' && 'bg-blue-100 text-blue-700'">💰 Sales</button>
-      <button @click="activeTab='products'" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100"
-              :class="activeTab==='products' && 'bg-blue-100 text-blue-700'">📦 Products</button>
-      <button @click="activeTab='settings'" class="w-full text-left px-4 py-2 rounded hover:bg-gray-100"
-              :class="activeTab==='settings' && 'bg-blue-100 text-blue-700'">⚙️ Settings</button>
-    </nav>
-  </aside>
+  <!-- Hero Section -->
+  <section class="text-center py-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+    <h1 class="text-4xl font-bold mb-4">Welcome to Abenier</h1>
+    <p class="mb-6 text-lg">Smart landing pages + chatbots for your business</p>
+    <a href="#contact" class="bg-white text-blue-600 font-semibold px-6 py-3 rounded-full shadow hover:bg-gray-100">
+      Get Started
+    </a>
+  </section>
 
-  <!-- Main Content -->
-  <div class="flex-1 flex flex-col ml-0 md:ml-64">
-    <!-- Topbar -->
-    <header class="bg-white shadow p-4 flex justify-between items-center">
-      <button class="md:hidden px-4 py-2 bg-blue-600 text-white rounded"
-              @click="sidebarOpen = !sidebarOpen">☰</button>
-      <h1 class="text-lg font-semibold">Dashboard</h1>
-      <div class="flex items-center space-x-4">
-        <span class="text-gray-600">Hello, Bena 👋</span>
-        <img src="https://i.pravatar.cc/40" class="w-10 h-10 rounded-full border">
+  <!-- Features Section -->
+  <section class="py-16 max-w-5xl mx-auto px-6">
+    <h2 class="text-2xl font-bold text-center mb-10">Why Choose Us?</h2>
+    <div class="grid gap-8 md:grid-cols-3">
+      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+        <h3 class="font-semibold text-lg mb-2">🚀 Fast Setup</h3>
+        <p>Launch your landing page in minutes with clean, modern design.</p>
       </div>
-    </header>
+      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+        <h3 class="font-semibold text-lg mb-2">🤖 Chatbot Ready</h3>
+        <p>Seamless integration with Telegram or Voiceflow bots.</p>
+      </div>
+      <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg">
+        <h3 class="font-semibold text-lg mb-2">📈 Optimized</h3>
+        <p>Mobile-first design focused on conversion and sales.</p>
+      </div>
+    </div>
+  </section>
 
-    <!-- Page Content -->
-    <main class="p-6 overflow-y-auto flex-1">
-      <!-- Home -->
-      <div x-show="activeTab==='home'" x-transition>
-        <h2 class="text-2xl font-bold mb-4">📊 Overview</h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div class="bg-white p-6 rounded-2xl shadow">
-            <p class="text-gray-500">Total Sales</p>
-            <h3 class="text-2xl font-bold">$12,340</h3>
-          </div>
-          <div class="bg-white p-6 rounded-2xl shadow">
-            <p class="text-gray-500">Orders</p>
-            <h3 class="text-2xl font-bold">245</h3>
-          </div>
-          <div class="bg-white p-6 rounded-2xl shadow">
-            <p class="text-gray-500">Visitors</p>
-            <h3 class="text-2xl font-bold">1,820</h3>
-          </div>
-        </div>
+  <!-- FAQ Section (with Alpine.js) -->
+  <section class="py-16 bg-gray-100 px-6">
+    <h2 class="text-2xl font-bold text-center mb-10">Frequently Asked Questions</h2>
+    <div class="max-w-2xl mx-auto space-y-4">
+      
+      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+          <span>How fast can you deliver?</span>
+          <span x-show="!open">+</span>
+          <span x-show="open">-</span>
+        </button>
+        <p x-show="open" class="mt-2 text-gray-600">Most landing pages are ready within 1–2 days.</p>
       </div>
 
-      <!-- Sales -->
-      <div x-show="activeTab==='sales'" x-transition>
-        <h2 class="text-2xl font-bold mb-4">💰 Sales</h2>
-        <p class="text-gray-600">This section shows your latest sales performance.</p>
+      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+          <span>Do you integrate chatbots?</span>
+          <span x-show="!open">+</span>
+          <span x-show="open">-</span>
+        </button>
+        <p x-show="open" class="mt-2 text-gray-600">Yes — we connect Telegram, Voiceflow, or ProProfs chat.</p>
       </div>
 
-      <!-- Products -->
-      <div x-show="activeTab==='products'" x-transition>
-        <h2 class="text-2xl font-bold mb-4">📦 Products</h2>
-        <ul class="space-y-2">
-          <li class="bg-white p-4 rounded shadow">iPhone 15 Pro</li>
-          <li class="bg-white p-4 rounded shadow">Samsung Galaxy S24</li>
-          <li class="bg-white p-4 rounded shadow">HP Pavilion Laptop</li>
-        </ul>
+      <div x-data="{ open: false }" class="bg-white p-4 rounded-xl shadow">
+        <button @click="open = !open" class="w-full text-left font-semibold flex justify-between">
+          <span>Can I update content myself?</span>
+          <span x-show="!open">+</span>
+          <span x-show="open">-</span>
+        </button>
+        <p x-show="open" class="mt-2 text-gray-600">Absolutely. Simple HTML updates, no coding needed.</p>
       </div>
 
-      <!-- Settings -->
-      <div x-show="activeTab==='settings'" x-transition>
-        <h2 class="text-2xl font-bold mb-4">⚙️ Settings</h2>
-        <p class="text-gray-600">Here you can customize your dashboard preferences.</p>
-      </div>
-    </main>
-  </div>
+    </div>
+  </section>
+
+  <!-- Contact -->
+  <section id="contact" class="py-16 text-center">
+    <h2 class="text-2xl font-bold mb-6">Start your project today</h2>
+    <a href="https://t.me/yourtelegram" class="bg-blue-600 text-white px-6 py-3 rounded-full shadow hover:bg-blue-700">
+      Contact on Telegram
+    </a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="text-center py-6 bg-gray-200 text-sm">
+    © 2025 Abenier. All rights reserved.
+  </footer>
 
 </body>
 </html>
