@@ -101,26 +101,35 @@
     <div></div> <!-- Empty space -->
   </div>
 </div>
-<div x-data="dashboard()" class="h-screen flex flex-col">
+<div x-data="dashboard()" x-init="init()" class="h-screen flex flex-col">
 
-  <!-- Header: Frozen -->
-  <header class="bg-white shadow-md sticky top-0 z-50 p-4 flex justify-between items-center">
+  <!-- AI Insights -->
+  <div class="bg-blue-50 p-4 shadow sticky top-0 z-50">
+    <h2 class="font-bold text-lg mb-2">AI Insights</h2>
+    <ul class="list-disc list-inside text-gray-700 text-sm">
+      <template x-for="insight in aiInsights" :key="insight.id">
+        <li x-text="insight.text"></li>
+      </template>
+    </ul>
+  </div>
+
+  <!-- Header: Sticky with Notifications -->
+  <header class="bg-white shadow-md sticky top-[64px] z-40 p-4 flex justify-between items-center">
     <h1 class="font-bold text-xl">Clinic Admin Panel</h1>
     <div>
-      <!-- Notifications -->
       <span x-text="newAppointments" x-show="newAppointments > 0" class="bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-full"></span>
     </div>
   </header>
 
   <!-- Tabs: Today / This Week / This Month -->
-  <div class="bg-gray-50 p-2 flex space-x-4 sticky top-[64px] z-40 shadow-sm">
+  <div class="bg-gray-50 p-2 flex space-x-4 sticky top-[112px] z-30 shadow-sm">
     <button @click="activeTab='today'" :class="activeTab==='today'? 'border-b-2 border-blue-500 font-semibold' : ''">Today</button>
     <button @click="activeTab='week'" :class="activeTab==='week'? 'border-b-2 border-blue-500 font-semibold' : ''">This Week</button>
     <button @click="activeTab='month'" :class="activeTab==='month'? 'border-b-2 border-blue-500 font-semibold' : ''">This Month</button>
   </div>
 
   <!-- Sub-tabs: Appointments / Patients -->
-  <div class="bg-gray-100 p-2 flex space-x-4 sticky top-[104px] z-30 shadow-inner">
+  <div class="bg-gray-100 p-2 flex space-x-4 sticky top-[144px] z-20 shadow-inner">
     <button @click="activeModule='appointments'" :class="activeModule==='appointments'? 'border-b-2 border-green-500 font-semibold' : ''">Appointments</button>
     <button @click="activeModule='patients'" :class="activeModule==='patients'? 'border-b-2 border-green-500 font-semibold' : ''">Patients</button>
   </div>
@@ -128,49 +137,37 @@
   <!-- Content Area -->
   <div class="flex-1 overflow-y-auto p-4 space-y-4">
 
-    <!-- Appointments Tab -->
-    <div x-show="activeModule==='appointments' && activeTab==='today'" class="space-y-2">
-      <template x-for="appt in filteredAppointments('today')" :key="appt.id">
+    <!-- Appointments -->
+    <div x-show="activeModule==='appointments'" class="space-y-2">
+      <template x-for="appt in filteredAppointments(activeTab)" :key="appt.id">
         <div class="p-3 border rounded flex justify-between items-center">
           <div>
-            <div class="font-bold" x-text="appt.patient"></div>
-            <div class="text-gray-600 text-sm" x-text="appt.time"></div>
+            <div class="font-bold" x-text="appt.patient_name"></div>
+            <div class="text-gray-600 text-sm" x-text="appt.time + ' | ' + appt.date"></div>
           </div>
-          <div :class="appt.isNew ? 'bg-red-500 text-white px-2 py-1 rounded text-xs font-bold' : ''" x-text="appt.isNew ? 'NEW' : ''"></div>
+          <div class="flex items-center space-x-2">
+            <div 
+              :class="appt.is_new ? 'bg-red-500 text-white px-2 py-1 rounded text-xs font-bold' : ''" 
+              x-text="appt.is_new ? 'NEW' : ''">
+            </div>
+            <button 
+              x-show="appt.is_new" 
+              @click="markAsSeen(appt)" 
+              class="bg-green-500 text-white px-2 py-1 rounded text-xs">
+              Mark as Seen
+            </button>
+          </div>
         </div>
       </template>
     </div>
 
-    <!-- Patients Tab -->
-    <div x-show="activeModule==='patients' && activeTab==='today'" class="space-y-2">
-      <template x-for="patient in patientsToday" :key="patient.id">
+    <!-- Patients -->
+    <div x-show="activeModule==='patients'" class="space-y-2">
+      <template x-for="patient in patients" :key="patient.id">
         <div class="p-3 border rounded flex justify-between items-center">
           <div>
             <div class="font-bold" x-text="patient.name"></div>
-            <div class="text-gray-600 text-sm" x-text="patient.lastVisit"></div>
-          </div>
-        </div>
-      </template>
-    </div>
-
-    <!-- Similar structure for week/month -->
-    <div x-show="activeModule==='appointments' && activeTab==='week'" class="space-y-2">
-      <template x-for="appt in filteredAppointments('week')" :key="appt.id">
-        <div class="p-3 border rounded flex justify-between items-center">
-          <div>
-            <div class="font-bold" x-text="appt.patient"></div>
-            <div class="text-gray-600 text-sm" x-text="appt.date"></div>
-          </div>
-        </div>
-      </template>
-    </div>
-
-    <div x-show="activeModule==='appointments' && activeTab==='month'" class="space-y-2">
-      <template x-for="appt in filteredAppointments('month')" :key="appt.id">
-        <div class="p-3 border rounded flex justify-between items-center">
-          <div>
-            <div class="font-bold" x-text="appt.patient"></div>
-            <div class="text-gray-600 text-sm" x-text="appt.date"></div>
+            <div class="text-gray-600 text-sm" x-text="'Last Visit: ' + patient.last_visit"></div>
           </div>
         </div>
       </template>
@@ -180,33 +177,101 @@
 </div>
 
 <script>
+const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+
 function dashboard() {
   return {
     activeTab: 'today',
     activeModule: 'appointments',
-    newAppointments: 2, // example badge count
-    appointments: [
-      { id: 1, patient: 'John Doe', time: '10:00 AM', date: '2025-08-27', isNew: true },
-      { id: 2, patient: 'Jane Smith', time: '11:30 AM', date: '2025-08-27', isNew: true },
-      { id: 3, patient: 'Bob Johnson', time: '09:00 AM', date: '2025-09-01', isNew: false },
-      { id: 4, patient: 'Alice Lee', time: '01:00 PM', date: '2025-09-08', isNew: false },
-    ],
-    patientsToday: [
-      { id: 1, name: 'John Doe', lastVisit: '2025-08-20' },
-      { id: 2, name: 'Jane Smith', lastVisit: '2025-08-21' },
-    ],
+    appointments: [],
+    patients: [],
+    feedbacks: [],
+    newAppointments: 0,
+    aiInsights: [],
+
+    async fetchData() {
+      const { data: appts } = await supabase.from('appointments').select('*');
+      const { data: patients } = await supabase.from('patients').select('*');
+      const { data: feedbacks } = await supabase.from('feedback').select('*');
+
+      this.appointments = appts || [];
+      this.patients = patients || [];
+      this.feedbacks = feedbacks || [];
+
+      this.updateAIInsights();
+      this.updateNewAppointments();
+    },
+
     filteredAppointments(period) {
       const today = new Date();
       const weekEnd = new Date(); weekEnd.setDate(today.getDate() + 7);
       const monthEnd = new Date(); monthEnd.setMonth(today.getMonth() + 1);
 
-      return this.appointments.filter(appt => {
+      let filtered = this.appointments.filter(appt => {
         const apptDate = new Date(appt.date);
-        if(period === 'today') return apptDate.toDateString() === today.toDateString();
-        if(period === 'week') return apptDate > today && apptDate <= weekEnd;
-        if(period === 'month') return apptDate > weekEnd && apptDate <= monthEnd;
+        if(period==='today') return apptDate.toDateString() === today.toDateString();
+        if(period==='week') return apptDate > today && apptDate <= weekEnd;
+        if(period==='month') return apptDate > weekEnd && apptDate <= monthEnd;
       });
+
+      this.newAppointments = filtered.filter(a=>a.is_new).length;
+      this.updateAIInsights();
+
+      return filtered;
+    },
+
+    updateAIInsights() {
+      const today = new Date();
+      const appointmentsToday = this.appointments.filter(a=>new Date(a.date).toDateString()===today.toDateString());
+      const peakHour = appointmentsToday.length ? appointmentsToday[0].time : 'No appointments';
+      const newPatients = this.patients.length;
+      const pendingFeedbacks = this.feedbacks.filter(f => !f.resolved).length;
+
+      this.aiInsights = [
+        { id:1, text: 'Peak appointment time today: ' + peakHour },
+        { id:2, text: 'New patients registered: ' + newPatients },
+        { id:3, text: 'Feedbacks needing attention: ' + pendingFeedbacks },
+      ];
+    },
+
+    updateNewAppointments() {
+      const today = new Date();
+      this.newAppointments = this.appointments.filter(a => new Date(a.date).toDateString() === today.toDateString() && a.is_new).length;
+    },
+
+    markAsSeen(appt) {
+      appt.is_new = false;
+      this.updateNewAppointments();
+      this.updateAIInsights();
+
+      supabase.from('appointments')
+        .update({ is_new: false })
+        .eq('id', appt.id)
+        .then(({ error }) => {
+          if (error) console.error('Error updating appointment:', error);
+        });
+    },
+
+    init() {
+      this.fetchData();
+
+      // Real-time updates via Supabase subscriptions
+      supabase.from('appointments').on('INSERT', payload => {
+        this.appointments.push(payload.new);
+        this.updateNewAppointments();
+        this.updateAIInsights();
+      }).subscribe();
+
+      supabase.from('patients').on('INSERT', payload => {
+        this.patients.push(payload.new);
+        this.updateAIInsights();
+      }).subscribe();
+
+      supabase.from('feedback').on('INSERT', payload => {
+        this.feedbacks.push(payload.new);
+        this.updateAIInsights();
+      }).subscribe();
     }
   }
 }
-</script>
+            </script>
