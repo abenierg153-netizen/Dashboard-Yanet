@@ -12,29 +12,27 @@
 
   <!-- Header -->
   <header class="bg-white shadow sticky top-0 z-50">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-      <a href="index.html" class="text-gray-600 hover:text-blue-600 flex items-center">
-        ← Back
-      </a>
-      <h1 class="text-2xl font-bold text-gray-800">Reports & Analytics</h1>
+    <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="index.html" class="text-gray-600 hover:text-blue-600 flex items-center">← Back</a>
+      <h1 class="text-xl font-bold text-gray-800">Reports & Analytics</h1>
       <div></div>
     </div>
   </header>
 
   <!-- Reports Section -->
-  <div x-data="reportsApp()" x-init="init()" class="max-w-6xl mx-auto px-4 py-6">
+  <div x-data="reportsApp()" x-init="init()" class="max-w-4xl mx-auto px-4 py-6">
 
     <!-- Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-      <div class="bg-white rounded-xl shadow p-4">
+      <div class="bg-white rounded-xl shadow p-4 text-center">
         <h3 class="text-gray-500 text-sm">Total Appointments</h3>
         <p class="text-2xl font-bold text-blue-600" x-text="appointments.length"></p>
       </div>
-      <div class="bg-white rounded-xl shadow p-4">
+      <div class="bg-white rounded-xl shadow p-4 text-center">
         <h3 class="text-gray-500 text-sm">Total Patients</h3>
         <p class="text-2xl font-bold text-green-600" x-text="patients.length"></p>
       </div>
-      <div class="bg-white rounded-xl shadow p-4">
+      <div class="bg-white rounded-xl shadow p-4 text-center">
         <h3 class="text-gray-500 text-sm">Marketing Requests</h3>
         <p class="text-2xl font-bold text-purple-600" x-text="marketing.length"></p>
       </div>
@@ -53,7 +51,7 @@
               class="pb-2">Marketing</button>
     </div>
 
-    <!-- Appointments Report -->
+    <!-- Appointments Chart -->
     <div x-show="activeTab === 'appointments'" class="space-y-6">
       <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-lg font-semibold mb-4">Appointments by Status</h2>
@@ -61,49 +59,22 @@
       </div>
     </div>
 
-    <!-- Patients Report -->
+    <!-- Patients Chart -->
     <div x-show="activeTab === 'patients'" class="space-y-6">
       <div class="bg-white p-6 rounded-xl shadow">
-        <h2 class="text-lg font-semibold mb-4">Patients Overview</h2>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="bg-gray-50 text-gray-600 text-left">
-              <th class="py-2 px-3">ID</th>
-              <th class="py-2 px-3">Full Name</th>
-              <th class="py-2 px-3">Phone</th>
-              <th class="py-2 px-3">Email</th>
-              <th class="py-2 px-3">Services Taken</th>
-            </tr>
-          </thead>
-          <tbody>
-            <template x-for="p in patients" :key="p.id">
-              <tr class="border-t">
-                <td class="py-2 px-3" x-text="p.id"></td>
-                <td class="py-2 px-3" x-text="p.full_name"></td>
-                <td class="py-2 px-3" x-text="p.phone"></td>
-                <td class="py-2 px-3" x-text="p.email"></td>
-                <td class="py-2 px-3" x-text="countAppointmentsForPatient(p.id)"></td>
-              </tr>
-            </template>
-          </tbody>
-        </table>
+        <h2 class="text-lg font-semibold mb-4">New Patients by Month</h2>
+        <canvas id="patientsChart"></canvas>
       </div>
     </div>
 
-    <!-- Marketing Report -->
+    <!-- Marketing Chart -->
     <div x-show="activeTab === 'marketing'" class="space-y-6">
       <div class="bg-white p-6 rounded-xl shadow">
         <h2 class="text-lg font-semibold mb-4">Marketing Requests</h2>
-        <ul class="divide-y">
-          <template x-for="m in marketing" :key="m.id">
-            <li class="py-3">
-              <p class="font-medium text-gray-800" x-text="m.title"></p>
-              <p class="text-sm text-gray-600" x-text="m.description"></p>
-            </li>
-          </template>
-        </ul>
+        <canvas id="marketingChart"></canvas>
       </div>
     </div>
+
   </div>
 
   <script>
@@ -113,7 +84,7 @@
         appointments: [],
         patients: [],
         marketing: [],
-        chart: null,
+        charts: {},
 
         async init() {
           const client = supabase.createClient(
@@ -131,23 +102,25 @@
           let { data: marketing } = await client.from('marketing').select('*');
           this.marketing = marketing || [];
 
-          this.renderAppointmentsChart();
+          this.renderCharts();
 
-          // Realtime listeners
+          // Realtime
           client.channel('appointments')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, payload => {
-              this.handleRealtimeChange(this.appointments, payload);
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'appointments' }, p => {
+              this.handleRealtimeChange(this.appointments, p);
               this.renderAppointmentsChart();
             }).subscribe();
 
           client.channel('patients')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, payload => {
-              this.handleRealtimeChange(this.patients, payload);
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'patients' }, p => {
+              this.handleRealtimeChange(this.patients, p);
+              this.renderPatientsChart();
             }).subscribe();
 
           client.channel('marketing')
-            .on('postgres_changes', { event: '*', schema: 'public', table: 'marketing' }, payload => {
-              this.handleRealtimeChange(this.marketing, payload);
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'marketing' }, p => {
+              this.handleRealtimeChange(this.marketing, p);
+              this.renderMarketingChart();
             }).subscribe();
         },
 
@@ -163,31 +136,56 @@
           }
         },
 
-        countAppointmentsForPatient(pid) {
-          return this.appointments.filter(a => a.patient_id === pid).length;
+        renderCharts() {
+          this.renderAppointmentsChart();
+          this.renderPatientsChart();
+          this.renderMarketingChart();
         },
 
         renderAppointmentsChart() {
-          const ctx = document.getElementById('appointmentsChart').getContext('2d');
+          const ctx = document.getElementById('appointmentsChart');
+          if (!ctx) return;
           const statusCounts = this.appointments.reduce((acc, appt) => {
             acc[appt.status] = (acc[appt.status] || 0) + 1;
             return acc;
           }, {});
+          this.updateChart('appointments', ctx, 'pie', Object.keys(statusCounts), Object.values(statusCounts));
+        },
 
-          const labels = Object.keys(statusCounts);
-          const values = Object.values(statusCounts);
+        renderPatientsChart() {
+          const ctx = document.getElementById('patientsChart');
+          if (!ctx) return;
+          // group by month
+          const monthly = this.patients.reduce((acc, p) => {
+            const month = new Date(p.created_at).toLocaleString('default', { month: 'short' });
+            acc[month] = (acc[month] || 0) + 1;
+            return acc;
+          }, {});
+          this.updateChart('patients', ctx, 'bar', Object.keys(monthly), Object.values(monthly));
+        },
 
-          if (this.chart) this.chart.destroy();
+        renderMarketingChart() {
+          const ctx = document.getElementById('marketingChart');
+          if (!ctx) return;
+          const counts = this.marketing.reduce((acc, m) => {
+            acc[m.type] = (acc[m.type] || 0) + 1;
+            return acc;
+          }, {});
+          this.updateChart('marketing', ctx, 'doughnut', Object.keys(counts), Object.values(counts));
+        },
 
-          this.chart = new Chart(ctx, {
-            type: 'pie',
+        updateChart(key, ctx, type, labels, values) {
+          if (this.charts[key]) this.charts[key].destroy();
+          this.charts[key] = new Chart(ctx, {
+            type,
             data: {
               labels,
               datasets: [{
                 data: values,
-                backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444']
+                backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6']
               }]
-            }
+            },
+            options: { responsive: true, maintainAspectRatio: false }
           });
         }
       }
