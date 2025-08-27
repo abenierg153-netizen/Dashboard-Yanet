@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Services - Clinic Admin</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  <script src="https://unpkg.com/stimulus"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.34.0/dist/supabase.min.js"></script>
+</head>
+<body class="bg-gray-100">
+
+  <!-- Back Arrow -->
+  <div class="p-4">
+    <a href="index.html" class="text-gray-700 font-semibold hover:text-gray-900">← Back</a>
+  </div>
+
+  <div class="max-w-4xl mx-auto p-4" x-data="servicesSection()" x-init="init()">
+
+    <!-- Tabs -->
+    <div class="flex space-x-4 border-b border-gray-200 mb-4">
+      <button @click="activeTab='tips'" 
+              :class="activeTab==='tips'? 'border-b-2 border-blue-500 font-semibold' : ''"
+              class="py-2 px-4">
+        Dental Tips
+      </button>
+      <button @click="activeTab='news'" 
+              :class="activeTab==='news'? 'border-b-2 border-blue-500 font-semibold' : ''"
+              class="py-2 px-4">
+        Clinic News
+      </button>
+    </div>
+
+    <!-- Dental Tips Content -->
+    <div x-show="activeTab==='tips'" class="space-y-4">
+      <textarea x-model="tips.description" placeholder="Enter Dental Tip description" 
+                class="w-full border px-2 py-1 rounded"></textarea>
+      <input type="file" @change="handleImage($event, 'tips')" class="border px-2 py-1 rounded w-full"/>
+      <div x-show="tips.previewImage">
+        <img :src="tips.previewImage" alt="Preview" class="h-32 mt-2 rounded border"/>
+      </div>
+      <button @click="save('Dental Tips')" class="px-4 py-2 bg-blue-500 text-white rounded">Save Tip</button>
+    </div>
+
+    <!-- Clinic News Content -->
+    <div x-show="activeTab==='news'" class="space-y-4">
+      <textarea x-model="news.description" placeholder="Enter Clinic News description" 
+                class="w-full border px-2 py-1 rounded"></textarea>
+      <input type="file" @change="handleImage($event, 'news')" class="border px-2 py-1 rounded w-full"/>
+      <div x-show="news.previewImage">
+        <img :src="news.previewImage" alt="Preview" class="h-32 mt-2 rounded border"/>
+      </div>
+      <button @click="save('Clinic News')" class="px-4 py-2 bg-blue-500 text-white rounded">Save News</button>
+    </div>
+
+    <!-- Existing Tips / News List -->
+    <div class="mt-6 space-y-2">
+      <template x-for="item in items" :key="item.id">
+        <div class="p-3 border rounded bg-white flex flex-col md:flex-row md:justify-between md:items-center">
+          <div>
+            <div class="font-bold text-gray-800" x-text="item.type"></div>
+            <div class="text-gray-600" x-text="item.description"></div>
+          </div>
+          <div x-show="item.image_url">
+            <img :src="item.image_url" alt="Uploaded Image" class="h-20 rounded border"/>
+          </div>
+        </div>
+      </template>
+    </div>
+
+  </div>
+
+  <script>
+    const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
+
+    function servicesSection() {
+      return {
+        activeTab: 'tips',
+        tips: { description:'', file:null, previewImage:null },
+        news: { description:'', file:null, previewImage:null },
+        items: [],
+
+        async init() {
+          await this.fetchItems();
+          // Real-time subscription
+          supabase.from('tips_news').on('INSERT', payload => {
+            this.items.push(payload.new);
+          }).subscribe();
+        },
+
+        handleImage(event, type) {
+          const file = event.target.files[0];
+          if(!file) return;
+          const reader = new FileReader();
+          reader.onload = e => {
+            if(type==='tips') this.tips.previewImage = e.target.result;
+            if(type==='news') this.news.previewImage = e.target.result;
+          };
+          reader.readAsDataURL(file);
+          if(type==='tips') this.tips.file = file;
+          if(type==='news') this.news.file = file;
+        },
+
+        async save(type) {
+          let obj = type==='Dental Tips' ? this.tips : this.news;
+          if(!obj.description) return alert("Description required");
+
+          let imageUrl = null;
+
+          if(obj.file){
+            const fileExt = obj.file.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const { data, error: uploadError } = await supabase.storage.from('tips-news-images').upload(fileName, obj.file);
+            if(uploadError) return alert(uploadError.message);
+            const { data: urlData } = supabase.storage.from('tips-news-images').getPublicUrl(fileName);
+            imageUrl = urlData.publicUrl;
+          }
+
+          const { data, error } = await supabase.from('tips_news').insert([{
+            type: type,
+            description: obj.description,
+            image_url: imageUrl
+          }]);
+
+          if(error) return alert(error.message);
+          this.items.push(data[0]);
+
+          // Reset
+          obj.description='';
+          obj.file=null;
+          obj.previewImage=null;
+        },
+
+        async fetchItems() {
+          const { data, error } = await supabase.from('tips_news').select('*').order('id', { ascending: false });
+          this.items = data || [];
+        }
+      }
+    }
+  </script>
+
+</body>
+</html>
