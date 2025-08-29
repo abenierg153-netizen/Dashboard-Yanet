@@ -1,213 +1,195 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Settings</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
-  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
-    const supabaseUrl = 'YOUR_SUPABASE_URL';
-    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
-    window.supabase = createClient(supabaseUrl, supabaseKey);
-
-    // --- Profile & Security ---
-    window.saveProfile = async () => {
-      const email = document.getElementById('email').value;
-      const phone = document.getElementById('phone').value;
-      const password = document.getElementById('password').value;
-      const profilePic = document.getElementById('profile-pic').files[0];
-      const userId = 'ADMIN_USER_ID'; // Replace with your admin ID
-
-      let updates = { email, phone };
-      if(password) updates.password = password;
-
-      // Upload profile picture if selected
-      if(profilePic){
-        const { data, error: uploadError } = await supabase.storage
-          .from('profile-pics')
-          .upload(`public/${userId}/${profilePic.name}`, profilePic, { upsert: true });
-        if(uploadError) return alert('Error uploading image: '+uploadError.message);
-
-        const { data: urlData } = supabase.storage.from('profile-pics').getPublicUrl(`public/${userId}/${profilePic.name}`);
-        updates.profile_picture = urlData.publicUrl;
-      }
-
-      const { error } = await supabase.from('users').update(updates).eq('id', userId);
-      if(error) alert('Error: '+error.message);
-      else alert('Profile updated!');
-    }
-
-    // --- User Management ---
-    async function loadStaff() {
-      const { data, error } = await supabase.from('staff').select('*').order('id',{ascending:true});
-      const tbody = document.getElementById('staff-list');
-      tbody.innerHTML = '';
-      if(error) return alert('Error loading staff: '+error.message);
-
-      data.forEach(staff => {
-        const row = document.createElement('tr');
-        row.classList.add('border-b');
-        row.innerHTML = `
-          <td class="px-2 py-1"><input type="text" value="${staff.full_name}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="full_name"></td>
-          <td class="px-2 py-1"><input type="email" value="${staff.email}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="email"></td>
-          <td class="px-2 py-1"><input type="text" value="${staff.phone || ''}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="phone"></td>
-          <td class="px-2 py-1"><input type="text" value="${staff.role || ''}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="role"></td>
-          <td class="px-2 py-1 space-x-2">
-            <button onclick="updateStaff(${staff.id})" class="px-2 py-1 bg-yellow-500 text-white rounded">Save</button>
-            <button onclick="deleteStaff(${staff.id})" class="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
-          </td>
-        `;
-        tbody.appendChild(row);
-      });
-    }
-
-    window.addStaff = async () => {
-      const name = prompt("Full Name:");
-      const email = prompt("Email:");
-      const phone = prompt("Phone:");
-      const role = prompt("Role:");
-      if(!name || !email) return alert("Name and Email required");
-      const { error } = await supabase.from('staff').insert([{ full_name:name,email,phone,role }]);
-      if(error) alert('Error adding staff: '+error.message);
-      else { alert('Staff added!'); loadStaff(); }
-    }
-
-    window.updateStaff = async (id) => {
-      const row = document.querySelectorAll(`input[data-id='${id}']`);
-      const updates = {};
-      row.forEach(input => updates[input.dataset.field] = input.value);
-      const { error } = await supabase.from('staff').update(updates).eq('id', id);
-      if(error) alert('Error updating: '+error.message);
-      else alert('Staff updated!');
-    }
-
-    window.deleteStaff = async (id) => {
-      if(!confirm("Delete this staff?")) return;
-      const { error } = await supabase.from('staff').delete().eq('id', id);
-      if(error) alert('Error deleting: '+error.message);
-      else loadStaff();
-    }
-
-    // --- Appointment Configuration ---
-    window.saveAppointment = async () => {
-      const duration = document.getElementById('appointment-duration').value;
-      const hours = document.getElementById('opening-hours').value;
-      const buffer = document.getElementById('buffer-time').value;
-      const { error } = await supabase.from('settings').update({appointment_duration:duration,opening_hours:hours,buffer_time:buffer}).eq('id',1);
-      if(error) alert('Error saving appointment: '+error.message);
-      else alert('Appointment saved!');
-    }
-
-    // --- System Preferences ---
-    window.savePreferences = async () => {
-      const currency = document.getElementById('currency').value;
-      const timezone = document.getElementById('timezone').value;
-      const notifications = document.getElementById('notifications').checked;
-      const { error } = await supabase.from('settings').update({currency,timezone,notifications}).eq('id',1);
-      if(error) alert('Error saving preferences: '+error.message);
-      else alert('Preferences saved!');
-    }
-
-    document.addEventListener('DOMContentLoaded', loadStaff);
-  </script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Settings</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script src="https://unpkg.com/@hotwired/stimulus/dist/stimulus.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-50 min-h-screen p-4">
+<body class="bg-gray-50 min-h-screen">
+<div class="container mx-auto px-4 py-8 max-w-4xl">
+<h1 class="text-3xl font-bold text-gray-900 mb-8">Admin Settings</h1>
 
-<div class="max-w-4xl mx-auto space-y-4">
-
-  <!-- Profile & Security -->
-  <div x-data="{ open:true, twoFA:false }" class="border rounded shadow bg-white">
-    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">Profile & Security</button>
-    <div x-show="open" class="p-4 space-y-3">
-      <div><label>Email</label><input id="email" type="email" class="w-full border p-2 rounded" placeholder="Email"></div>
-      <div><label>Phone</label><input id="phone" type="tel" class="w-full border p-2 rounded" placeholder="Phone"></div>
-      <div><label>Password</label><input id="password" type="password" class="w-full border p-2 rounded" placeholder="New Password"></div>
-      <div>
-        <label class="flex items-center"><input type="checkbox" x-model="twoFA" class="form-checkbox"><span class="ml-2">Enable 2FA</span></label>
-        <div x-show="twoFA" class="mt-2 space-y-2">
-          <img src="qr-code-placeholder.png" alt="QR" class="w-32 h-32 border rounded">
-          <input type="text" class="w-full border p-2 rounded" placeholder="OTP">
-        </div>
-      </div>
-      <div>
-        <label>Profile Picture</label>
-        <input id="profile-pic" type="file" class="w-full border p-2 rounded">
-      </div>
-      <button onclick="saveProfile()" class="px-4 py-2 bg-blue-600 text-white rounded">Save Profile</button>
-    </div>
-  </div>
-
-  <!-- User Management -->
-  <div x-data="{ open:false }" class="border rounded shadow bg-white">
-    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">User Management</button>
-    <div x-show="open" class="p-4 space-y-3">
-      <button onclick="addStaff()" class="px-4 py-2 bg-green-600 text-white rounded">+ Add Staff</button>
-      <table class="w-full text-left border mt-2">
-        <thead class="bg-gray-100">
-          <tr><th class="px-2 py-1">Full Name</th><th class="px-2 py-1">Email</th><th class="px-2 py-1">Phone</th><th class="px-2 py-1">Role</th><th class="px-2 py-1">Actions</th></tr>
-        </thead>
-        <tbody id="staff-list"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- Appointment Configuration -->
-  <div x-data="{ open:false }" class="border rounded shadow bg-white">
-    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">Appointment Configuration</button>
-    <div x-show="open" class="p-4 space-y-3">
-      <div>
-        <label>Appointment Duration</label>
-        <select id="appointment-duration" class="w-full border p-2 rounded">
-          <option>15 min</option>
-          <option>30 min</option>
-          <option>45 min</option>
-          <option>60 min</option>
-        </select>
-      </div>
-      <div>
-        <label>Opening Hours</label>
-        <input id="opening-hours" type="text" class="w-full border p-2 rounded" placeholder="9:00 AM - 5:00 PM">
-      </div>
-      <div>
-        <label>Buffer Time (min)</label>
-        <input id="buffer-time" type="number" class="w-full border p-2 rounded" placeholder="10">
-      </div>
-      <button onclick="saveAppointment()" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
-    </div>
-  </div>
-
-  <!-- System Preferences -->
-  <div x-data="{ open:false }" class="border rounded shadow bg-white">
-    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">System Preferences</button>
-    <div x-show="open" class="p-4 space-y-3">
-      <div>
-        <label>Currency</label>
-        <select id="currency" class="w-full border p-2 rounded">
-          <option>USD</option>
-          <option>ETB</option>
-          <option>EUR</option>
-        </select>
-      </div>
-      <div>
-        <label>Timezone</label>
-        <select id="timezone" class="w-full border p-2 rounded">
-          <option>Africa/Addis_Ababa</option>
-          <option>UTC</option>
-          <option>America/New_York</option>
-        </select>
-      </div>
-      <div class="flex items-center">
-        <input id="notifications" type="checkbox" class="form-checkbox">
-        <label class="ml-2">Enable Notifications</label>
-      </div>
-      <button onclick="savePreferences()" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
-    </div>
-  </div>
-
+<!-- Profile & Security Card -->
+<div class="bg-white rounded-lg shadow-md mb-6" x-data="{ open: true }">
+<div class="p-6 border-b border-gray-200">
+<button @click="open = !open" class="flex items-center justify-between w-full text-left">
+<h2 class="text-xl font-semibold text-gray-900">Profile & Security</h2>
+<i class="fas fa-chevron-down transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+</button>
+</div>
+<div x-show="open" x-transition class="p-6">
+<form data-controller="profile" data-action="submit->profile#updateProfile">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<!-- Profile Picture -->
+<div class="md:col-span-2">
+<label class="block text-sm font-medium text-gray-700 mb-2">Profile Picture</label>
+<div class="flex items-center space-x-4">
+<img id="profileImage" src="https://via.placeholder.com/80" alt="Profile" class="w-20 h-20 rounded-full object-cover border-2 border-gray-300">
+<div>
+<input type="file" id="profilePicture" accept="image/*" class="hidden" data-profile-target="fileInput">
+<button type="button" onclick="document.getElementById('profilePicture').click()" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+<i class="fas fa-camera mr-2"></i>Change Photo
+</button>
+</div>
+</div>
 </div>
 
+<!-- Email -->
+<div>
+<label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+<input type="email" id="email" name="email" data-profile-target="email" 
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+value="admin@company.com">
+</div>
+
+<!-- Phone -->
+<div>
+<label for="phone" class="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+<input type="tel" id="phone" name="phone" data-profile-target="phone"
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+value="+251">
+</div>
+
+<!-- Password -->
+<div>
+<label for="password" class="block text-sm font-medium text-gray-700 mb-2">New Password</label>
+<input type="password" id="password" name="password" data-profile-target="password"
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+placeholder="Enter new password">
+</div>
+
+<!-- Confirm Password -->
+<div>
+<label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
+<input type="password" id="confirmPassword" name="confirmPassword" data-profile-target="confirmPassword"
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+placeholder="Confirm new password">
+</div>
+</div>
+
+<div class="mt-6">
+<button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition">
+<i class="fas fa-save mr-2"></i>Save Changes
+</button>
+</div>
+</form>
+</div>
+</div>
+
+<!-- User Management Card -->
+<div class="bg-white rounded-lg shadow-md mb-6" x-data="{ open: true, showAddForm: false }">
+<div class="p-6 border-b border-gray-200">
+<button @click="open = !open" class="flex items-center justify-between w-full text-left">
+<h2 class="text-xl font-semibold text-gray-900">User Management</h2>
+<i class="fas fa-chevron-down transition-transform duration-200" :class="{ 'rotate-180': open }"></i>
+</button>
+</div>
+<div x-show="open" x-transition class="p-6">
+<!-- Add New Staff Button -->
+<div class="mb-6">
+<button @click="showAddForm = !showAddForm" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
+<i class="fas fa-plus mr-2"></i>Add New Staff
+</button>
+</div>
+
+<!-- Add Staff Form -->
+<div x-show="showAddForm" x-transition class="bg-gray-50 p-4 rounded-lg mb-6">
+<form data-controller="staff" data-action="submit->staff#addStaff">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+<input type="text" name="fullName" data-staff-target="fullName" required
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+<input type="email" name="email" data-staff-target="email" required
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+</div>
+<div>
+<label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+<input type="tel" name="phone" data-staff-target="phone" required
+class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+value="+251">
+</div>
+</div>
+<div class="mt-4 flex space-x-2">
+<button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+<i class="fas fa-save mr-1"></i>Save
+</button>
+<button type="button" @click="showAddForm = false" class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600 transition">
+Cancel
+</button>
+</div>
+</form>
+</div>
+
+<!-- Staff Table -->
+<div class="overflow-x-auto">
+<table class="min-w-full divide-y divide-gray-200">
+<thead class="bg-gray-50">
+<tr>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+</tr>
+</thead>
+<tbody id="staffTableBody" class="bg-white divide-y divide-gray-200">
+<!-- Staff rows populated by JS -->
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Toast Notifications -->
+<div id="toast-container" class="fixed top-4 right-4 z-50"></div>
+
+<script>
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+const Utils = {
+showToast(msg,type='success'){const t=document.createElement('div');t.className=`p-4 rounded-md shadow-lg mb-2 transition-all duration-300 ${type==='success'?'bg-green-500 text-white':type==='error'?'bg-red-500 text-white':'bg-blue-500 text-white'}`;t.innerHTML=`<div class="flex items-center justify-between"><span>${msg}</span><button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200"><i class="fas fa-times"></i></button></div>`;document.getElementById('toast-container').appendChild(t);setTimeout(()=>{if(t.parentElement)t.remove();},5000)},
+validateEmail(e){return/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);},validatePhone(p){return/^\+251[0-9]{9,12}$/.test(p.replace(/[\s\-\(\)]/g,''));},
+validatePassword(p){return p.length>=8;}
+};
+
+// Stimulus Controllers
+const { Application, Controller } = Stimulus;
+const application = Application.start();
+
+// Profile Controller
+class ProfileController extends Controller {
+static targets = ["email","phone","password","confirmPassword","fileInput"];
+connect(){this.loadProfile();this.fileInputTarget.addEventListener('change',this.handleFileUpload.bind(this));}
+async loadProfile(){try{const {data,error}=await supabase.from('users').select('*').eq('role','admin').single();if(error)throw error;if(data){this.emailTarget.value=data.email||'';this.phoneTarget.value=data.phone||'+251';if(data.profile_picture){document.getElementById('profileImage').src=data.profile_picture;}}}catch(e){console.error(e);}}
+async handleFileUpload(event){const file=event.target.files[0];if(!file)return;if(!file.type.startsWith('image/')){Utils.showToast('Please select a valid image file','error');return;}if(file.size>5*1024*1024){Utils.showToast('File size must be less than 5MB','error');return;}try{const fileName=`profile_${Date.now()}.${file.name.split('.').pop()}`;const {data,error}=await supabase.storage.from('profiles').upload(fileName,file);if(error)throw error;const {data:{publicUrl}}=supabase.storage.from('profiles').getPublicUrl(fileName);document.getElementById('profileImage').src=publicUrl;await supabase.from('users').update({profile_picture:publicUrl}).eq('role','admin');Utils.showToast('Profile picture updated successfully');}catch(e){console.error(e);Utils.showToast('Error uploading file','error');}}
+async updateProfile(e){e.preventDefault();const email=this.emailTarget.value;const phone=this.phoneTarget.value;const password=this.passwordTarget.value;const confirmPassword=this.confirmPasswordTarget.value;if(!Utils.validateEmail(email)){Utils.showToast('Please enter a valid email','error');return;}if(phone&&!Utils.validatePhone(phone)){Utils.showToast('Phone must start with +251','error');return;}if(password&&password!==confirmPassword){Utils.showToast('Passwords do not match','error');return;}try{const updates={email,phone};if(password)updates.password=password;await supabase.from('users').update(updates).eq('role','admin');Utils.showToast('Profile updated successfully');}catch(e){console.error(e);Utils.showToast('Error updating profile','error');}}
+}
+application.register("profile",ProfileController);
+
+// Staff Controller
+class StaffController extends Controller {
+static targets=["fullName","email","phone"];
+connect(){this.loadStaff();}
+async loadStaff(){try{const {data,error}=await supabase.from('users').select('*').neq('role','admin');if(error)throw error;const tbody=document.getElementById('staffTableBody');tbody.innerHTML='';data.forEach(staff=>{const tr=document.createElement('tr');tr.innerHTML=`<td class="px-6 py-4 whitespace-nowrap"><span class="staff-name">${staff.fullName}</span></td><td class="px-6 py-4 whitespace-nowrap"><span class="staff-email">${staff.email}</span></td><td class="px-6 py-4 whitespace-nowrap"><span class="staff-phone">${staff.phone}</span></td><td class="px-6 py-4 whitespace-nowrap space-x-2"><button class="bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600" onclick="editStaff('${staff.id}',this)">Edit</button><button class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700" onclick="deleteStaff('${staff.id}')">Delete</button></td>`;tbody.appendChild(tr);});}catch(e){console.error(e);}}
+async addStaff(e){e.preventDefault();const fullName=this.fullNameTarget.value;const email=this.emailTarget.value;const phone=this.phoneTarget.value;if(!fullName||!email||!phone){Utils.showToast('All fields required','error');return;}if(!Utils.validateEmail(email)){Utils.showToast('Invalid email','error');return;}if(!Utils.validatePhone(phone)){Utils.showToast('Phone must start with +251','error');return;}try{await supabase.from('users').insert({fullName,email,phone,role:'staff'});Utils.showToast('Staff added');this.fullNameTarget.value='';this.emailTarget.value='';this.phoneTarget.value='+251';this.loadStaff();}catch(e){console.error(e);Utils.showToast('Error adding staff','error');}}
+}
+application.register("staff",StaffController);
+
+// Inline Edit Functions
+window.editStaff=async function(id,btn){const tr=btn.closest('tr');const nameSpan=tr.querySelector('.staff-name');const emailSpan=tr.querySelector('.staff-email');const phoneSpan=tr.querySelector('.staff-phone');const currentName=nameSpan.textContent;const currentEmail=emailSpan.textContent;const currentPhone=phoneSpan.textContent;nameSpan.innerHTML=`<input class="w-full px-2 py-1 border rounded" value="${currentName}">`;emailSpan.innerHTML=`<input class="w-full px-2 py-1 border rounded" value="${currentEmail}">`;phoneSpan.innerHTML=`<input class="w-full px-2 py-1 border rounded" value="${currentPhone}">`;btn.textContent='Save';btn.onclick=async()=>{const newName=nameSpan.querySelector('input').value;const newEmail=emailSpan.querySelector('input').value;const newPhone=phoneSpan.querySelector('input').value;if(!Utils.validateEmail(newEmail)){Utils.showToast('Invalid email','error');return;}if(!Utils.validatePhone(newPhone)){Utils.showToast('Phone must start with +251','error');return;}try{await supabase.from('users').update({fullName:newName,email:newEmail,phone:newPhone}).eq('id',id);Utils.showToast('Staff updated');nameSpan.textContent=newName;emailSpan.textContent=newEmail;phoneSpan.textContent=newPhone;btn.textContent='Edit';btn.onclick=()=>editStaff(id,btn);}catch(e){console.error(e);Utils.showToast('Error updating','error');}};}
+window.deleteStaff=async function(id){if(!confirm('Delete this staff?'))return;try{await supabase.from('users').delete().eq('id',id);Utils.showToast('Staff deleted');document.getElementById('staffTableBody').querySelector(`tr`).remove();}catch(e){console.error(e);Utils.showToast('Error deleting','error');}}
+</script>
 </body>
 </html>
