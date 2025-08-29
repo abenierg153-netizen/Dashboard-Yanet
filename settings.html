@@ -1,436 +1,213 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Yanet Dental Clinic – Settings</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Settings</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
-  <script src="https://unpkg.com/@hotwired/stimulus@3.2.2/dist/stimulus.umd.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase browser client (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-  <style>
-    .card { @apply bg-white border border-gray-200 rounded-2xl shadow-sm; }
-    .card-h { @apply px-4 py-3 border-b border-gray-100 text-sm font-semibold text-gray-700; }
-    .card-b { @apply p-4; }
-    .pill { @apply inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium; }
-    .btn { @apply inline-flex items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition; }
-    .btn-p { @apply bg-blue-600 text-white hover:bg-blue-700; }
-    .btn-s { @apply bg-gray-800 text-white hover:bg-black; }
-    .btn-g { @apply bg-green-600 text-white hover:bg-green-700; }
-    .btn-o { @apply bg-orange-500 text-white hover:bg-orange-600; }
-    .btn-r { @apply bg-red-600 text-white hover:bg-red-700; }
-    .ipt { @apply block w-full rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm; }
-    .lbl { @apply text-xs text-gray-600 font-medium; }
-    .row { @apply grid grid-cols-1 gap-3 sm:grid-cols-2; }
-    .row3 { @apply grid grid-cols-1 gap-3 md:grid-cols-3; }
-  </style>
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <script src="https://unpkg.com/htmx.org@1.9.5"></script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+    const supabaseUrl = 'YOUR_SUPABASE_URL';
+    const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+    window.supabase = createClient(supabaseUrl, supabaseKey);
+
+    // --- Profile & Security ---
+    window.saveProfile = async () => {
+      const email = document.getElementById('email').value;
+      const phone = document.getElementById('phone').value;
+      const password = document.getElementById('password').value;
+      const profilePic = document.getElementById('profile-pic').files[0];
+      const userId = 'ADMIN_USER_ID'; // Replace with your admin ID
+
+      let updates = { email, phone };
+      if(password) updates.password = password;
+
+      // Upload profile picture if selected
+      if(profilePic){
+        const { data, error: uploadError } = await supabase.storage
+          .from('profile-pics')
+          .upload(`public/${userId}/${profilePic.name}`, profilePic, { upsert: true });
+        if(uploadError) return alert('Error uploading image: '+uploadError.message);
+
+        const { data: urlData } = supabase.storage.from('profile-pics').getPublicUrl(`public/${userId}/${profilePic.name}`);
+        updates.profile_picture = urlData.publicUrl;
+      }
+
+      const { error } = await supabase.from('users').update(updates).eq('id', userId);
+      if(error) alert('Error: '+error.message);
+      else alert('Profile updated!');
+    }
+
+    // --- User Management ---
+    async function loadStaff() {
+      const { data, error } = await supabase.from('staff').select('*').order('id',{ascending:true});
+      const tbody = document.getElementById('staff-list');
+      tbody.innerHTML = '';
+      if(error) return alert('Error loading staff: '+error.message);
+
+      data.forEach(staff => {
+        const row = document.createElement('tr');
+        row.classList.add('border-b');
+        row.innerHTML = `
+          <td class="px-2 py-1"><input type="text" value="${staff.full_name}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="full_name"></td>
+          <td class="px-2 py-1"><input type="email" value="${staff.email}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="email"></td>
+          <td class="px-2 py-1"><input type="text" value="${staff.phone || ''}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="phone"></td>
+          <td class="px-2 py-1"><input type="text" value="${staff.role || ''}" class="w-full border p-1 rounded" data-id="${staff.id}" data-field="role"></td>
+          <td class="px-2 py-1 space-x-2">
+            <button onclick="updateStaff(${staff.id})" class="px-2 py-1 bg-yellow-500 text-white rounded">Save</button>
+            <button onclick="deleteStaff(${staff.id})" class="px-2 py-1 bg-red-600 text-white rounded">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+    }
+
+    window.addStaff = async () => {
+      const name = prompt("Full Name:");
+      const email = prompt("Email:");
+      const phone = prompt("Phone:");
+      const role = prompt("Role:");
+      if(!name || !email) return alert("Name and Email required");
+      const { error } = await supabase.from('staff').insert([{ full_name:name,email,phone,role }]);
+      if(error) alert('Error adding staff: '+error.message);
+      else { alert('Staff added!'); loadStaff(); }
+    }
+
+    window.updateStaff = async (id) => {
+      const row = document.querySelectorAll(`input[data-id='${id}']`);
+      const updates = {};
+      row.forEach(input => updates[input.dataset.field] = input.value);
+      const { error } = await supabase.from('staff').update(updates).eq('id', id);
+      if(error) alert('Error updating: '+error.message);
+      else alert('Staff updated!');
+    }
+
+    window.deleteStaff = async (id) => {
+      if(!confirm("Delete this staff?")) return;
+      const { error } = await supabase.from('staff').delete().eq('id', id);
+      if(error) alert('Error deleting: '+error.message);
+      else loadStaff();
+    }
+
+    // --- Appointment Configuration ---
+    window.saveAppointment = async () => {
+      const duration = document.getElementById('appointment-duration').value;
+      const hours = document.getElementById('opening-hours').value;
+      const buffer = document.getElementById('buffer-time').value;
+      const { error } = await supabase.from('settings').update({appointment_duration:duration,opening_hours:hours,buffer_time:buffer}).eq('id',1);
+      if(error) alert('Error saving appointment: '+error.message);
+      else alert('Appointment saved!');
+    }
+
+    // --- System Preferences ---
+    window.savePreferences = async () => {
+      const currency = document.getElementById('currency').value;
+      const timezone = document.getElementById('timezone').value;
+      const notifications = document.getElementById('notifications').checked;
+      const { error } = await supabase.from('settings').update({currency,timezone,notifications}).eq('id',1);
+      if(error) alert('Error saving preferences: '+error.message);
+      else alert('Preferences saved!');
+    }
+
+    document.addEventListener('DOMContentLoaded', loadStaff);
+  </script>
 </head>
-<body class="bg-gray-50 min-h-screen" x-data="settingsApp()" x-init="init()">
-  <!-- Top Bar -->
-  <header class="bg-white sticky top-0 z-50 border-b border-gray-200">
-    <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between">
-      <div class="flex items-center gap-2 font-bold text-blue-600"><i class="fas fa-tooth"></i> Yanet Dental Clinic</div>
-      <div class="text-xs text-gray-500">Settings</div>
-    </div>
-  </header>  <!-- Page -->  <main class="max-w-5xl mx-auto p-4 space-y-4"><!-- Supabase Connection (required for System Preferences + 2FA + Avatar upload) -->
-<section class="card">
-  <div class="card-h flex items-center justify-between">
-    <div>
-      Supabase Connection
-      <span class="pill bg-blue-50 text-blue-700" x-show="!supabaseReady">Not connected</span>
-      <span class="pill bg-green-50 text-green-700" x-show="supabaseReady">Connected</span>
-    </div>
-    <button class="btn btn-p" @click="connectSupabase()"><i class="fa fa-plug"></i> Connect</button>
-  </div>
-  <div class="card-b space-y-3">
-    <p class="text-xs text-gray-600">Paste your project credentials (never use the <strong>service_role</strong> key in the browser). These are stored only in <strong>localStorage</strong> on this device.</p>
-    <div class="row">
+<body class="bg-gray-50 min-h-screen p-4">
+
+<div class="max-w-4xl mx-auto space-y-4">
+
+  <!-- Profile & Security -->
+  <div x-data="{ open:true, twoFA:false }" class="border rounded shadow bg-white">
+    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">Profile & Security</button>
+    <div x-show="open" class="p-4 space-y-3">
+      <div><label>Email</label><input id="email" type="email" class="w-full border p-2 rounded" placeholder="Email"></div>
+      <div><label>Phone</label><input id="phone" type="tel" class="w-full border p-2 rounded" placeholder="Phone"></div>
+      <div><label>Password</label><input id="password" type="password" class="w-full border p-2 rounded" placeholder="New Password"></div>
       <div>
-        <label class="lbl">SUPABASE_URL</label>
-        <input class="ipt" type="text" x-model="env.url" placeholder="https://YOUR-PROJECT.supabase.co" />
+        <label class="flex items-center"><input type="checkbox" x-model="twoFA" class="form-checkbox"><span class="ml-2">Enable 2FA</span></label>
+        <div x-show="twoFA" class="mt-2 space-y-2">
+          <img src="qr-code-placeholder.png" alt="QR" class="w-32 h-32 border rounded">
+          <input type="text" class="w-full border p-2 rounded" placeholder="OTP">
+        </div>
       </div>
       <div>
-        <label class="lbl">SUPABASE_ANON_KEY</label>
-        <input class="ipt" type="password" x-model="env.anon" placeholder="eyJhbGciOiJI..." />
+        <label>Profile Picture</label>
+        <input id="profile-pic" type="file" class="w-full border p-2 rounded">
       </div>
-    </div>
-    <div class="text-xs text-gray-600">Signed in as: <span class="font-semibold" x-text="session?.user?.email || '—'"></span>
-      <button class="btn btn-s ml-2" @click="signInDemo()">Quick Sign‑In</button>
-      <button class="btn btn-r ml-2" @click="signOut()">Sign Out</button>
+      <button onclick="saveProfile()" class="px-4 py-2 bg-blue-600 text-white rounded">Save Profile</button>
     </div>
   </div>
-</section>
 
-<!-- 1) Profile & Security -->
-<section class="card" id="profile-security">
-  <div class="card-h">1) Profile & Security</div>
-  <div class="card-b space-y-6">
-    <div class="row">
-      <div class="space-y-2">
-        <label class="lbl">Email</label>
-        <input class="ipt" type="email" placeholder="admin@clinic.com" x-model="profile.email" />
-      </div>
-      <div class="space-y-2">
-        <label class="lbl">Phone Number</label>
-        <input class="ipt" type="tel" placeholder="+251 9xx xxx xxx" x-model="profile.phone" @blur="profile.phone=formatPhone(profile.phone)" />
-      </div>
-    </div>
-    <div class="row">
-      <div class="space-y-2">
-        <label class="lbl">New Password</label>
-        <input class="ipt" type="password" placeholder="••••••••" x-model="profile.newPassword" />
-      </div>
-      <div class="space-y-2">
-        <label class="lbl">Confirm Password</label>
-        <input class="ipt" type="password" placeholder="••••••••" x-model="profile.confirmPassword" />
-      </div>
-    </div>
-    <div class="flex items-center gap-3">
-      <button class="btn btn-g" @click="saveProfile()"><i class="fa fa-save"></i> Save Profile</button>
-      <span class="text-xs text-gray-500" x-text="messages.profile"></span>
-    </div>
-
-    <!-- Avatar upload -->
-    <div class="border-t border-gray-100 pt-4">
-      <div class="lbl mb-2">Profile Picture</div>
-      <div class="flex items-center gap-4">
-        <img :src="avatarUrl || 'https://placehold.co/96x96?text=Avatar'" class="w-16 h-16 rounded-full object-cover border" alt="avatar" />
-        <input type="file" accept="image/*" @change="uploadAvatar($event)" class="text-sm" />
-      </div>
-      <p class="text-xs text-gray-500 mt-2">Stored in Supabase Storage bucket <code>avatars</code>. Make it public or serve with signed URLs.</p>
-    </div>
-
-    <!-- Two‑Factor Auth (TOTP) -->
-    <div class="border-t border-gray-100 pt-4 space-y-3">
-      <div class="flex items-center justify-between">
-        <div>
-          <div class="font-medium text-gray-800">Two‑Factor Authentication (TOTP)</div>
-          <p class="text-xs text-gray-500">Not another password — you’ll enter a 6‑digit code from Google Authenticator, 1Password, etc.</p>
-        </div>
-        <div>
-          <template x-if="!mfa.enabled">
-            <button class="btn btn-p" @click="startTOTP()"><i class="fa fa-shield"></i> Enable 2FA</button>
-          </template>
-          <template x-if="mfa.enabled">
-            <button class="btn btn-r" @click="disableTOTP()"><i class="fa fa-ban"></i> Disable 2FA</button>
-          </template>
-        </div>
-      </div>
-
-      <!-- Enrollment UI -->
-      <div class="rounded-xl bg-slate-50 p-3" x-show="mfa.step==='scan'">
-        <div class="text-sm font-medium mb-2">Step 1 — Scan this QR with your Authenticator app</div>
-        <div class="flex items-center gap-4">
-          <img :src="mfa.qr || ''" alt="QR" class="w-36 h-36 border rounded" />
-          <div class="text-xs text-gray-600 break-all min-w-0">
-            <div class="font-semibold">Secret</div>
-            <div x-text="mfa.secret"></div>
-          </div>
-        </div>
-        <div class="mt-3 text-xs text-gray-600">If the image is blank, ensure Supabase is connected & you are signed in.</div>
-      </div>
-      <div class="rounded-xl bg-slate-50 p-3" x-show="mfa.step==='verify'">
-        <div class="text-sm font-medium mb-2">Step 2 — Enter the 6‑digit code to verify</div>
-        <div class="flex items-center gap-2">
-          <input class="ipt w-40 text-center tracking-widest" maxlength="6" placeholder="123456" x-model="mfa.code" />
-          <button class="btn btn-g" @click="verifyTOTP()">Verify</button>
-        </div>
-        <div class="text-xs text-gray-500 mt-2" x-text="messages.mfa"></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 2) User Management -->
-<section class="card" id="user-management">
-  <div class="card-h flex items-center justify-between">
-    <span>2) User Management</span>
-    <button class="btn btn-p" @click="openStaffModal()"><i class="fa fa-user-plus"></i> Add Staff</button>
-  </div>
-  <div class="card-b">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-left text-gray-500 border-b">
-            <th class="py-2 pr-4">Full Name</th>
-            <th class="py-2 pr-4">Email</th>
-            <th class="py-2 pr-4">Phone</th>
-            <th class="py-2 pr-4">Role</th>
-            <th class="py-2 pr-4">Permissions</th>
-            <th class="py-2 text-right">Actions</th>
-          </tr>
+  <!-- User Management -->
+  <div x-data="{ open:false }" class="border rounded shadow bg-white">
+    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">User Management</button>
+    <div x-show="open" class="p-4 space-y-3">
+      <button onclick="addStaff()" class="px-4 py-2 bg-green-600 text-white rounded">+ Add Staff</button>
+      <table class="w-full text-left border mt-2">
+        <thead class="bg-gray-100">
+          <tr><th class="px-2 py-1">Full Name</th><th class="px-2 py-1">Email</th><th class="px-2 py-1">Phone</th><th class="px-2 py-1">Role</th><th class="px-2 py-1">Actions</th></tr>
         </thead>
-        <tbody>
-          <template x-for="u in staff" :key="u.id">
-            <tr class="border-b last:border-0">
-              <td class="py-2 pr-4" x-text="u.name"></td>
-              <td class="py-2 pr-4" x-text="u.email"></td>
-              <td class="py-2 pr-4" x-text="u.phone"></td>
-              <td class="py-2 pr-4"><span class="pill bg-gray-100 text-gray-700" x-text="u.role"></span></td>
-              <td class="py-2 pr-4">
-                <div class="flex flex-wrap gap-1">
-                  <template x-for="p in u.perms">
-                    <span class="pill bg-blue-50 text-blue-700" x-text="p"></span>
-                  </template>
-                </div>
-              </td>
-              <td class="py-2 flex items-center gap-2 justify-end">
-                <button class="btn btn-s" @click="openStaffModal(u)"><i class="fa fa-pen"></i> Edit</button>
-                <button class="btn btn-r" @click="deleteStaff(u.id)"><i class="fa fa-trash"></i> Delete</button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
+        <tbody id="staff-list"></tbody>
       </table>
     </div>
   </div>
-</section>
 
-<!-- Staff Modal -->
-<div x-show="modals.staff" @keydown.escape.window="modals.staff=false" class="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" style="display:none">
-  <div class="bg-white rounded-2xl w-full max-w-lg shadow-lg p-4 mx-2">
-    <div class="flex items-center justify-between">
-      <div class="font-semibold">Staff Account</div>
-      <button class="btn" @click="modals.staff=false"><i class="fa fa-times"></i></button>
-    </div>
-    <div class="mt-3 space-y-3">
+  <!-- Appointment Configuration -->
+  <div x-data="{ open:false }" class="border rounded shadow bg-white">
+    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">Appointment Configuration</button>
+    <div x-show="open" class="p-4 space-y-3">
       <div>
-        <label class="lbl">Full Name</label>
-        <input class="ipt" type="text" x-model="formStaff.name" placeholder="Dr. Hana Alemu" />
+        <label>Appointment Duration</label>
+        <select id="appointment-duration" class="w-full border p-2 rounded">
+          <option>15 min</option>
+          <option>30 min</option>
+          <option>45 min</option>
+          <option>60 min</option>
+        </select>
       </div>
-      <div class="row">
-        <div>
-          <label class="lbl">Email</label>
-          <input class="ipt" type="email" x-model="formStaff.email" placeholder="user@clinic.com" />
-        </div>
-        <div>
-          <label class="lbl">Phone</label>
-          <input class="ipt" type="tel" x-model="formStaff.phone" placeholder="+251 9xx xxx xxx" />
-        </div>
+      <div>
+        <label>Opening Hours</label>
+        <input id="opening-hours" type="text" class="w-full border p-2 rounded" placeholder="9:00 AM - 5:00 PM">
       </div>
-      <div class="row">
-        <div>
-          <label class="lbl">Role</label>
-          <select class="ipt" x-model="formStaff.role">
-            <option>Admin</option>
-            <option>Doctor</option>
-            <option>Receptionist</option>
-            <option>Nurse</option>
-            <option>Accountant</option>
-          </select>
-        </div>
-        <div>
-          <label class="lbl">Permissions</label>
-          <div class="grid grid-cols-2 gap-1 text-xs">
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.appointments" /> Appointments</label>
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.patients" /> Patients</label>
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.billing" /> Billing</label>
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.services" /> Services</label>
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.reports" /> Reports</label>
-            <label class="flex items-center gap-2"><input type="checkbox" x-model="permChecks.settings" /> Settings</label>
-          </div>
-        </div>
+      <div>
+        <label>Buffer Time (min)</label>
+        <input id="buffer-time" type="number" class="w-full border p-2 rounded" placeholder="10">
       </div>
-    </div>
-    <div class="mt-4 flex items-center justify-end gap-2">
-      <button class="btn" @click="modals.staff=false">Cancel</button>
-      <button class="btn btn-p" @click="saveStaff()"><i class="fa fa-save"></i> Save</button>
+      <button onclick="saveAppointment()" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
     </div>
   </div>
-</div>
 
-<!-- 3) Appointments Configuration -->
-<section class="card" id="appointments-config">
-  <div class="card-h">3) Appointments Configuration</div>
-  <div class="card-b space-y-4">
-    <div class="row3">
+  <!-- System Preferences -->
+  <div x-data="{ open:false }" class="border rounded shadow bg-white">
+    <button @click="open=!open" class="w-full text-left px-4 py-2 bg-blue-600 text-white font-semibold rounded-t">System Preferences</button>
+    <div x-show="open" class="p-4 space-y-3">
       <div>
-        <label class="lbl">Slot Duration (minutes)</label>
-        <input class="ipt" type="number" min="5" step="5" x-model.number="appt.slot" />
-      </div>
-      <div>
-        <label class="lbl">Buffer Between Slots (minutes)</label>
-        <input class="ipt" type="number" min="0" step="5" x-model.number="appt.buffer" />
-      </div>
-      <div>
-        <label class="lbl">Max Patients Per Slot</label>
-        <input class="ipt" type="number" min="1" step="1" x-model.number="appt.maxPerSlot" />
-      </div>
-    </div>
-    <div class="row3">
-      <div>
-        <label class="lbl">Workday Start</label>
-        <input class="ipt" type="time" x-model="appt.start" />
-      </div>
-      <div>
-        <label class="lbl">Workday End</label>
-        <input class="ipt" type="time" x-model="appt.end" />
-      </div>
-      <div class="flex items-end">
-        <label class="flex items-center gap-2 lbl"><input type="checkbox" x-model="appt.allowOverbook" /> Allow overbooking</label>
-      </div>
-    </div>
-    <div class="row3">
-      <div>
-        <label class="lbl">Booking Window (days ahead)</label>
-        <input class="ipt" type="number" min="1" step="1" x-model.number="appt.windowDays" />
-      </div>
-      <div>
-        <label class="lbl">Cancellation Cutoff (hours)</label>
-        <input class="ipt" type="number" min="0" step="1" x-model.number="appt.cancelHours" />
-      </div>
-      <div class="flex items-end">
-        <button class="btn btn-o" @click="previewSlots()"><i class="fa fa-eye"></i> Preview Today’s Slots</button>
-      </div>
-    </div>
-    <div class="text-xs text-gray-500">These rules power availability on the Appointments page and reminders.</div>
-    <div class="bg-slate-50 rounded-xl p-3" x-show="slotPreview.length">
-      <div class="lbl mb-2">Sample Slots for Today</div>
-      <div class="flex flex-wrap gap-2">
-        <template x-for="t in slotPreview" :key="t">
-          <span class="pill bg-gray-100 text-gray-700" x-text="t"></span>
-        </template>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <button class="btn btn-g" @click="saveAppt()"><i class="fa fa-save"></i> Save Appointment Rules</button>
-      <span class="text-xs" x-text="messages.appt"></span>
-    </div>
-  </div>
-</section>
-
-<!-- 4) Service Pricing Settings -->
-<section class="card" id="service-pricing">
-  <div class="card-h flex items-center justify-between">
-    <span>4) Service Pricing Settings</span>
-    <button class="btn btn-p" @click="addServicePrompt()"><i class="fa fa-plus"></i> Add Service</button>
-  </div>
-  <div class="card-b">
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="text-left text-gray-500 border-b">
-            <th class="py-2 pr-4">Service</th>
-            <th class="py-2 pr-4">Price (<span x-text="prefs.currency"></span>)</th>
-            <th class="py-2 pr-4">Status</th>
-            <th class="py-2 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <template x-for="s in services" :key="s.id">
-            <tr class="border-b last:border-0">
-              <td class="py-2 pr-4" x-text="s.name"></td>
-              <td class="py-2 pr-4">
-                <input class="ipt w-36" type="number" step="0.01" x-model.number="s.price" @change="saveServices()" />
-              </td>
-              <td class="py-2 pr-4">
-                <span class="pill" :class="s.active? 'bg-green-50 text-green-700':'bg-gray-100 text-gray-600'" x-text="s.active? 'Active':'Hidden'"></span>
-              </td>
-              <td class="py-2 text-right">
-                <button class="btn btn-s" @click="s.active=!s.active; saveServices()"><i class="fa" :class="s.active?'fa-eye-slash':'fa-eye'"></i> Toggle</button>
-                <button class="btn btn-r" @click="deleteService(s.id)"><i class="fa fa-trash"></i> Delete</button>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
-    </div>
-    <div class="mt-3 text-xs text-gray-500">Use this list in your <code>services.html</code> & billing to keep prices consistent.</div>
-  </div>
-</section>
-
-<!-- 5) System Preferences (Supabase-backed) -->
-<section class="card" id="system-preferences">
-  <div class="card-h">5) System Preferences (Synced with Supabase)</div>
-  <div class="card-b space-y-3">
-    <div class="row3">
-      <div>
-        <label class="lbl">Clinic Name</label>
-        <input class="ipt" type="text" x-model="prefs.clinic_name" placeholder="Yanet Dental Clinic" />
-      </div>
-      <div>
-        <label class="lbl">Currency</label>
-        <select class="ipt" x-model="prefs.currency">
-          <option>ETB</option>
+        <label>Currency</label>
+        <select id="currency" class="w-full border p-2 rounded">
           <option>USD</option>
+          <option>ETB</option>
           <option>EUR</option>
         </select>
       </div>
       <div>
-        <label class="lbl">Theme</label>
-        <select class="ipt" x-model="prefs.theme">
-          <option>light</option>
-          <option>dark</option>
-          <option>system</option>
+        <label>Timezone</label>
+        <select id="timezone" class="w-full border p-2 rounded">
+          <option>Africa/Addis_Ababa</option>
+          <option>UTC</option>
+          <option>America/New_York</option>
         </select>
       </div>
+      <div class="flex items-center">
+        <input id="notifications" type="checkbox" class="form-checkbox">
+        <label class="ml-2">Enable Notifications</label>
+      </div>
+      <button onclick="savePreferences()" class="px-4 py-2 bg-blue-600 text-white rounded">Save</button>
     </div>
-    <div class="row3">
-      <div>
-        <label class="lbl">Language</label>
-        <select class="ipt" x-model="prefs.language">
-          <option value="en">English</option>
-          <option value="am">Amharic</option>
-        </select>
-      </div>
-      <div>
-        <label class="lbl">Time Format</label>
-        <select class="ipt" x-model="prefs.time_format">
-          <option value="24h">24‑hour</option>
-          <option value="12h">12‑hour</option>
-        </select>
-      </div>
-      <div>
-        <label class="lbl">Date Format</label>
-        <select class="ipt" x-model="prefs.date_format">
-          <option value="dd/MM/yyyy">dd/MM/yyyy</option>
-          <option value="MM/dd/yyyy">MM/dd/yyyy</option>
-          <option value="yyyy-MM-dd">yyyy‑MM‑dd</option>
-        </select>
-      </div>
-    </div>
-    <div class="row">
-      <div>
-        <label class="lbl">Timezone</label>
-        <input class="ipt" type="text" x-model="prefs.timezone" placeholder="Africa/Addis_Ababa" />
-      </div>
-      <div class="flex items-end">
-        <label class="flex items-center gap-2 lbl"><input type="checkbox" x-model="prefs.notify_email" /> Email notifications</label>
-        <label class="flex items-center gap-2 lbl ml-6"><input type="checkbox" x-model="prefs.notify_sms" /> SMS notifications</label>
-      </div>
-    </div>
-    <div class="flex items-center gap-2">
-      <button class="btn btn-g" @click="savePrefs()"><i class="fa fa-cloud-arrow-up"></i> Save to Supabase</button>
-      <button class="btn" @click="loadPrefs()"><i class="fa fa-rotate"></i> Reload</button>
-      <span class="text-xs" x-text="messages.prefs"></span>
-    </div>
-    <p class="text-xs text-gray-500">Prefs are saved in table <code>system_preferences</code> keyed by your <code>auth.users.id</code>.</p>
   </div>
-</section>
 
-<footer class="py-10"></footer>
+</div>
 
-  </main>  <!-- Stimulus: simple Toast controller -->  <div data-controller="toast" class="fixed bottom-4 inset-x-0 flex justify-center pointer-events-none"></div><script>
-  // Stimulus toast controller
-  (() => {
-    const application = window.Stimulus.Application.start();
-    application.register('toast', class extends Stimulus.Controller {
-      connect() { window._toast = (msg) => this.show(msg) }
-      show(msg) {
-        const el = document.createElement('div')
-        el.className = 'pointer-events-auto bg-black text-white text-sm rounded-full px-4 py-2 shadow'
-        el.textContent = msg
-        this.element.appendChild(el)
-        setTimeout(()=> el.remove(), 2200)
-      }
-    });
-  })();
-
-  // Alpine app
-  function settingsApp(){
-    return {
-      // --- ENV & Supabase
-      env: { ur
+</body>
+</html>
