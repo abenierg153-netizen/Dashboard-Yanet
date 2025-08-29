@@ -17,6 +17,7 @@
 </header>
 
 <div class="max-w-4xl mx-auto pt-4 p-4">
+
   <div x-data="patientsSection()" x-init="init()" class="space-y-4">
 
     <!-- Search -->
@@ -67,17 +68,7 @@
     </div>
 
     <!-- Add Patient Modal -->
-    <div 
-      x-show="showAddForm" 
-      x-transition:enter="transition ease-out duration-300" 
-      x-transition:enter-start="opacity-0 scale-90" 
-      x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" 
-      x-transition:leave-start="opacity-100 scale-100" 
-      x-transition:leave-end="opacity-0 scale-90"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
-      @click.away="showAddForm=false"
-    >
+    <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
         <h2 class="font-bold text-lg">Add New Patient</h2>
         <input type="text" x-model="newPatient.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
@@ -86,28 +77,13 @@
         <input type="text" x-model="newPatient.service" placeholder="Service" class="w-full border px-2 py-1 rounded"/>
         <div class="flex justify-end space-x-2">
           <button @click="showAddForm=false" class="px-3 py-1 border rounded">Cancel</button>
-          <button 
-            @click="addPatient()" 
-            :disabled="!newPatient.full_name || !newPatient.email || !newPatient.phone || !newPatient.service" 
-            class="px-3 py-1 bg-blue-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">
-            Add
-          </button>
+          <button @click="addPatient()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
         </div>
       </div>
     </div>
 
     <!-- View Patient Modal -->
-    <div 
-      x-show="showViewModal" 
-      x-transition:enter="transition ease-out duration-300" 
-      x-transition:enter-start="opacity-0 scale-90" 
-      x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" 
-      x-transition:leave-start="opacity-100 scale-100" 
-      x-transition:leave-end="opacity-0 scale-90"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
-      @click.away="showViewModal=false"
-    >
+    <div x-show="showViewModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
         <h2 class="font-bold text-lg">Patient Details</h2>
         <p><strong>Full Name:</strong> <span x-text="viewPatientData.full_name"></span></p>
@@ -122,17 +98,7 @@
     </div>
 
     <!-- Edit Patient Modal -->
-    <div 
-      x-show="showEditModal" 
-      x-transition:enter="transition ease-out duration-300" 
-      x-transition:enter-start="opacity-0 scale-90" 
-      x-transition:enter-end="opacity-100 scale-100"
-      x-transition:leave="transition ease-in duration-200" 
-      x-transition:leave-start="opacity-100 scale-100" 
-      x-transition:leave-end="opacity-0 scale-90"
-      class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
-      @click.away="showEditModal=false"
-    >
+    <div x-show="showEditModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
       <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
         <h2 class="font-bold text-lg">Edit Patient</h2>
         <input type="text" x-model="editPatientData.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
@@ -145,24 +111,19 @@
         </select>
         <div class="flex justify-end space-x-2">
           <button @click="showEditModal=false" class="px-3 py-1 border rounded">Cancel</button>
-          <button 
-            @click="updatePatient()" 
-            :disabled="!editPatientData.full_name || !editPatientData.email || !editPatientData.phone || !editPatientData.service" 
-            class="px-3 py-1 bg-green-500 text-white rounded disabled:opacity-50 disabled:cursor-not-allowed">
-            Save
-          </button>
+          <button @click="updatePatient()" class="px-3 py-1 bg-green-500 text-white rounded">Save</button>
         </div>
       </div>
     </div>
 
+    <!-- Floating Add Button -->
+    <button @click="showAddForm=true" 
+            class="fixed bottom-4 right-4 px-4 py-3 bg-blue-500 text-white rounded-full shadow-lg z-50">
+      + Add Patient
+    </button>
+
   </div>
 </div>
-
-<!-- Floating Add Button -->
-<button @click="showAddForm=true" 
-        class="fixed bottom-4 right-4 px-4 py-3 bg-blue-500 text-white rounded-full shadow-lg z-50">
-  + Add Patient
-</button>
 
 <script>
 const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
@@ -254,4 +215,4 @@ function patientsSection() {
 </script>
 
 </body>
-</html>
+</html
