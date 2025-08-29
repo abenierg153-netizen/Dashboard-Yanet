@@ -3,123 +3,141 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Patients - Yanet Dental Clinic</title>
+  <title>Patients Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
 <body class="bg-gray-100">
 
-  <div class="p-6" x-data="patientsSection()" x-init="init()">
+  <!-- Header -->
+  <header class="bg-blue-600 text-white p-4">
+    <h1 class="text-xl font-bold">Patients Management</h1>
+  </header>
 
-    <!-- Page Title -->
-    <h1 class="text-2xl font-bold mb-4">Patients</h1>
-
-    <!-- Patients Table -->
-    <div class="bg-white p-4 rounded-lg shadow">
+  <!-- Table -->
+  <main class="p-4">
+    <div class="bg-white shadow rounded-lg p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">Patients List</h2>
+        <button id="addPatientBtn" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+          Add Patient
+        </button>
+      </div>
       <table class="w-full border">
-        <thead class="bg-gray-200">
-          <tr>
-            <th class="px-4 py-2 text-left">Full Name</th>
-            <th class="px-4 py-2 text-left">Email</th>
-            <th class="px-4 py-2 text-left">Phone</th>
-            <th class="px-4 py-2 text-left">Service</th>
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="p-2 border">Full Name</th>
+            <th class="p-2 border">Email</th>
+            <th class="p-2 border">Phone</th>
+            <th class="p-2 border">Service</th>
           </tr>
         </thead>
-        <tbody>
-          <template x-for="patient in patients" :key="patient.id">
-            <tr class="border-t">
-              <td class="px-4 py-2" x-text="patient.full_name"></td>
-              <td class="px-4 py-2" x-text="patient.email"></td>
-              <td class="px-4 py-2" x-text="patient.phone"></td>
-              <td class="px-4 py-2" x-text="patient.service"></td>
-            </tr>
-          </template>
+        <tbody id="patientsTable" class="text-center">
+          <!-- Rows will load here -->
         </tbody>
       </table>
     </div>
+  </main>
 
-    <!-- Add Patient Modal -->
-    <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white p-6 rounded-lg shadow-lg w-96">
-        <h2 class="text-lg font-bold mb-4">Add New Patient</h2>
-        
-        <form @submit.prevent="addPatient">
-          <div class="mb-3">
-            <label class="block text-sm">Full Name</label>
-            <input type="text" x-model="newPatient.full_name" class="w-full border p-2 rounded">
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm">Email</label>
-            <input type="email" x-model="newPatient.email" class="w-full border p-2 rounded">
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm">Phone</label>
-            <input type="text" x-model="newPatient.phone" class="w-full border p-2 rounded">
-          </div>
-          <div class="mb-3">
-            <label class="block text-sm">Service</label>
-            <input type="text" x-model="newPatient.service" class="w-full border p-2 rounded">
-          </div>
+  <!-- Add Patient Modal -->
+  <div id="addPatientModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
+      <h2 class="text-lg font-bold mb-4">Add Patient</h2>
+      <form id="addPatientForm" class="space-y-4">
+        <input type="text" id="fullName" placeholder="Full Name" class="w-full p-2 border rounded" required>
+        <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded" required>
+        <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border rounded" required>
+        <input type="text" id="service" placeholder="Service" class="w-full p-2 border rounded" required>
 
-          <div class="flex justify-end space-x-2">
-            <button type="button" @click="showAddForm = false" class="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-            <button type="submit" class="px-4 py-2 bg-blue-500 text-white rounded">Submit</button>
-          </div>
-        </form>
-      </div>
+        <div class="flex justify-end space-x-2">
+          <button type="button" id="cancelBtn" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+        </div>
+      </form>
     </div>
-
-    <!-- Floating Add Button -->
-    <div class="fixed bottom-4 right-4 z-50">
-      <button @click="showAddForm = true" 
-              class="px-4 py-3 bg-blue-500 text-white rounded-full shadow-lg">
-        + Add Patient
-      </button>
-    </div>
-
   </div>
 
   <script>
-    const supabaseUrl = "https://YOUR-PROJECT.supabase.co"; 
-    const supabaseKey = "YOUR-ANON-KEY"; 
-    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+    // 🔹 Initialize Supabase
+    const supabaseUrl = "YOUR_SUPABASE_URL";   // ⬅️ Replace with your Supabase project URL
+    const supabaseKey = "YOUR_SUPABASE_KEY";   // ⬅️ Replace with your anon key
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    function patientsSection() {
-      return {
-        patients: [],
-        showAddForm: false,
-        newPatient: { full_name: "", email: "", phone: "", service: "" },
+    const addPatientBtn = document.getElementById("addPatientBtn");
+    const addPatientModal = document.getElementById("addPatientModal");
+    const cancelBtn = document.getElementById("cancelBtn");
+    const addPatientForm = document.getElementById("addPatientForm");
+    const patientsTable = document.getElementById("patientsTable");
 
-        async init() {
-          await this.fetchPatients();
+    // 🔹 Open modal
+    addPatientBtn.addEventListener("click", () => {
+      addPatientModal.classList.remove("hidden");
+    });
 
-          // Real-time listener
-          supabaseClient
-            .channel("patients-changes")
-            .on("postgres_changes", { event: "INSERT", schema: "public", table: "patients" }, (payload) => {
-              this.patients.push(payload.new);
-            })
-            .subscribe();
-        },
+    // 🔹 Close modal
+    cancelBtn.addEventListener("click", () => {
+      addPatientModal.classList.add("hidden");
+    });
 
-        async fetchPatients() {
-          let { data, error } = await supabaseClient.from("patients").select("*");
-          if (!error) {
-            this.patients = data;
-          }
-        },
-
-        async addPatient() {
-          let { data, error } = await supabaseClient.from("patients").insert([this.newPatient]).select();
-          if (!error && data.length > 0) {
-            this.patients.push(data[0]); // fallback if realtime doesn't fire
-          }
-          this.newPatient = { full_name: "", email: "", phone: "", service: "" };
-          this.showAddForm = false;
-        }
+    // 🔹 Fetch and render patients
+    async function loadPatients() {
+      const { data, error } = await supabase.from("patients").select("*");
+      if (error) {
+        console.error("Error loading patients:", error);
+        return;
       }
+      patientsTable.innerHTML = "";
+      data.forEach(patient => {
+        addRow(patient);
+      });
     }
+
+    // 🔹 Insert patient row into table
+    function addRow(patient) {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td class="p-2 border">${patient.full_name}</td>
+        <td class="p-2 border">${patient.email}</td>
+        <td class="p-2 border">${patient.phone}</td>
+        <td class="p-2 border">${patient.service}</td>
+      `;
+      patientsTable.appendChild(row);
+    }
+
+    // 🔹 Handle form submission
+    addPatientForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const fullName = document.getElementById("fullName").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+      const service = document.getElementById("service").value;
+
+      const { data, error } = await supabase.from("patients").insert([
+        { full_name: fullName, email: email, phone: phone, service: service }
+      ]);
+
+      if (error) {
+        console.error("Error adding patient:", error);
+      } else {
+        addPatientModal.classList.add("hidden");
+        addPatientForm.reset();
+      }
+    });
+
+    // 🔹 Listen for realtime changes
+    supabase.channel("patients-channel")
+      .on("postgres_changes", { event: "*", schema: "public", table: "patients" }, payload => {
+        console.log("Realtime update:", payload);
+        if (payload.eventType === "INSERT") {
+          addRow(payload.new);
+        }
+      })
+      .subscribe();
+
+    // 🔹 Initial load
+    loadPatients();
   </script>
 </body>
 </html>
