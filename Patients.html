@@ -3,161 +3,213 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Feedback | Yaneta Dental Clinic</title>
+  <title>Patients - Yanet Dental Clinic</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.34.0/dist/supabase.min.js"></script>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100">
 
-  <!-- Header -->
-  <header class="bg-white shadow-md fixed top-0 left-0 w-full z-50">
-    <div class="container mx-auto px-4 py-3 flex items-center">
-      <button onclick="history.back()" class="text-gray-600 hover:text-gray-900 mr-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="text-xl font-semibold text-gray-700 mx-auto">Feedback</h1>
-      <div class="relative ml-auto">
-        <input id="search-input" type="text" placeholder="Search..." class="border rounded px-2 py-1" />
-        <i class="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
-      </div>
-    </div>
-  </header>
+<!-- Header -->
+<header class="bg-white shadow p-3 flex items-center space-x-4 sticky top-0 z-50">
+  <a href="index.html" class="text-gray-700 font-semibold hover:text-gray-900">← Dashboard</a>
+  <h1 class="text-lg font-bold">Patients</h1>
+</header>
 
-  <!-- Main Content -->
-  <div class="container mx-auto p-4 pt-20">
-    <!-- Total Feedback Card -->
-    <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
-      <div class="bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-gray-500">Total Feedback</h2>
-        <p id="total-feedback" class="text-3xl font-bold mt-2">0</p>
-      </div>
+<div class="max-w-4xl mx-auto pt-4 p-4">
+
+  <div x-data="patientsSection()" x-init="init()" class="space-y-4">
+
+    <!-- Search -->
+    <div class="p-4">
+      <input type="text" x-model="searchQuery" placeholder="Search patient..." 
+             class="w-full p-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring focus:border-blue-300">
     </div>
 
-    <!-- Feedback Table -->
-    <div class="bg-white shadow-md rounded-lg p-6 overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+    <!-- Tabs -->
+    <div class="flex space-x-4 border-b border-gray-200 overflow-x-auto">
+      <button @click="activeTab='all'" :class="activeTab==='all' ? 'border-b-2 border-blue-500 font-semibold' : ''" class="py-2 px-4 flex-shrink-0">All</button>
+      <button @click="activeTab='active'" :class="activeTab==='active' ? 'border-b-2 border-blue-500 font-semibold' : ''" class="py-2 px-4 flex-shrink-0">Active</button>
+      <button @click="activeTab='inactive'" :class="activeTab==='inactive' ? 'border-b-2 border-blue-500 font-semibold' : ''" class="py-2 px-4 flex-shrink-0">Inactive</button>
+    </div>
+
+    <!-- Patients Table -->
+    <div class="overflow-x-auto bg-white shadow rounded">
+      <table class="min-w-full divide-y divide-gray-200 table-auto">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">ID</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Full Name</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Email</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Phone</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Status</th>
+            <th class="px-4 py-2 text-left text-xs font-bold text-gray-500 uppercase">Actions</th>
           </tr>
         </thead>
-        <tbody id="feedback-table-body" class="bg-white divide-y divide-gray-200">
-          <!-- Feedback rows populate here -->
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <template x-for="patient in filteredPatients()" :key="patient.id">
+            <tr>
+              <td class="px-4 py-2 text-sm" x-text="patient.id"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.full_name"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.email"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.phone"></td>
+              <td class="px-4 py-2 text-sm font-semibold" :class="{'text-green-600': patient.status==='active','text-gray-500': patient.status==='inactive'}" x-text="patient.status.toUpperCase()"></td>
+              <td class="px-4 py-2 flex space-x-2 flex-wrap">
+                <button @click="viewPatient(patient)" class="bg-blue-500 text-white px-3 py-2 rounded text-sm">View</button>
+                <button @click="editPatient(patient)" class="bg-green-500 text-white px-3 py-2 rounded text-sm">Edit</button>
+                <button @click="deletePatient(patient)" class="bg-red-500 text-white px-3 py-2 rounded text-sm">Delete</button>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
+
+    <!-- Add Patient Modal -->
+    <div x-show="showAddForm" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
+        <h2 class="font-bold text-lg">Add New Patient</h2>
+        <input type="text" x-model="newPatient.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
+        <input type="email" x-model="newPatient.email" placeholder="Email" class="w-full border px-2 py-1 rounded"/>
+        <input type="text" x-model="newPatient.phone" placeholder="Phone" class="w-full border px-2 py-1 rounded"/>
+        <select x-model="newPatient.status" class="w-full border px-2 py-1 rounded">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <div class="flex justify-end space-x-2">
+          <button @click="showAddForm=false" class="px-3 py-1 border rounded">Cancel</button>
+          <button @click="addPatient()" class="px-3 py-1 bg-blue-500 text-white rounded">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Patient Modal -->
+    <div x-show="showViewModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
+        <h2 class="font-bold text-lg">Patient Details</h2>
+        <p><strong>Full Name:</strong> <span x-text="viewPatientData.full_name"></span></p>
+        <p><strong>Email:</strong> <span x-text="viewPatientData.email"></span></p>
+        <p><strong>Phone:</strong> <span x-text="viewPatientData.phone"></span></p>
+        <p><strong>Status:</strong> <span x-text="viewPatientData.status.toUpperCase()"></span></p>
+        <div class="flex justify-end">
+          <button @click="showViewModal=false" class="px-3 py-1 border rounded">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Edit Patient Modal -->
+    <div x-show="showEditModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50">
+      <div class="bg-white rounded shadow-lg w-full max-w-md p-6 space-y-4">
+        <h2 class="font-bold text-lg">Edit Patient</h2>
+        <input type="text" x-model="editPatientData.full_name" placeholder="Full Name" class="w-full border px-2 py-1 rounded"/>
+        <input type="email" x-model="editPatientData.email" placeholder="Email" class="w-full border px-2 py-1 rounded"/>
+        <input type="text" x-model="editPatientData.phone" placeholder="Phone" class="w-full border px-2 py-1 rounded"/>
+        <select x-model="editPatientData.status" class="w-full border px-2 py-1 rounded">
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+        <div class="flex justify-end space-x-2">
+          <button @click="showEditModal=false" class="px-3 py-1 border rounded">Cancel</button>
+          <button @click="updatePatient()" class="px-3 py-1 bg-green-500 text-white rounded">Save</button>
+        </div>
+      </div>
+    </div>
+
   </div>
+</div>
 
-  <!-- Toast container -->
-  <div id="toast-container" class="fixed top-16 right-4 space-y-2 z-50"></div>
+<!-- Floating Add Button -->
+<button @click="showAddForm=true" 
+        class="fixed bottom-4 right-4 px-4 py-3 bg-blue-500 text-white rounded-full shadow-lg z-50">
+  + Add Patient
+</button>
 
-  <!-- Supabase Setup -->
-  <script>
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
-    const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+<script>
+const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
 
-    let allFeedback = [];
+function patientsSection() {
+  return {
+    activeTab: 'all',
+    patients: [],
+    searchQuery: '',
+    showAddForm: false,
+    showViewModal: false,
+    showEditModal: false,
+    viewPatientData: {},
+    editPatientData: {},
+    newPatient: { full_name:'', email:'', phone:'', status:'active' },
 
-    async function fetchAndUpdateFeedback() {
-      try {
-        const { data, error } = await supabase
-          .from('feedback')
-          .select('*')
-          .order('created_at', { ascending: false });
+    async init() {
+      await this.fetchPatients();
+      supabase.from('patients').on('INSERT', payload => {
+        this.patients.unshift(payload.new);
+      }).subscribe();
+    },
 
-        if (error) throw error;
+    async fetchPatients() {
+      const { data } = await supabase.from('patients').select('*');
+      this.patients = data || [];
+    },
 
-        allFeedback = data;
-        document.getElementById('total-feedback').innerText = allFeedback.length;
-
-        renderFeedbackTable(allFeedback);
-      } catch (error) {
-        console.error('Error fetching feedback:', error);
+    filteredPatients() {
+      let filtered = this.patients;
+      if(this.activeTab !== 'all') filtered = filtered.filter(p => p.status === this.activeTab);
+      if(this.searchQuery) {
+        const q = this.searchQuery.toLowerCase();
+        filtered = filtered.filter(p =>
+          p.full_name.toLowerCase().includes(q) ||
+          p.email.toLowerCase().includes(q) ||
+          p.phone.toLowerCase().includes(q)
+        );
       }
-    }
+      return filtered;
+    },
 
-    function renderFeedbackTable(feedbackData) {
-      const tbody = document.getElementById('feedback-table-body');
-      tbody.innerHTML = '';
-      feedbackData.forEach(feedback => {
-        tbody.innerHTML += `<tr id="feedback-${feedback.id}" class="border-b">
-          <td class="py-2 px-4">${feedback.name}</td>
-          <td class="py-2 px-4">${feedback.email}</td>
-          <td class="py-2 px-4">${feedback.message}</td>
-          <td class="py-2 px-4">
-            ${feedback.is_new ? '<span class="bg-red-500 text-white px-2 py-0.5 rounded text-xs font-bold">NEW</span>' : 'Read'}
-          </td>
-          <td class="py-2 px-4">
-            <button class="text-blue-500 hover:underline" onclick="markAsRead('${feedback.id}')">Mark as Read</button>
-          </td>
-        </tr>`;
-      });
-    }
+    viewPatient(patient) {
+      this.viewPatientData = {...patient};
+      this.showViewModal = true;
+    },
 
-    function showToast(message, rowId) {
-      const container = document.getElementById('toast-container');
-      const toast = document.createElement('div');
-      toast.className = 'bg-blue-500 text-white px-4 py-2 rounded shadow-md cursor-pointer animate-slide-in';
-      toast.innerText = message;
+    editPatient(patient) {
+      this.editPatientData = {...patient};
+      this.showEditModal = true;
+    },
 
-      toast.addEventListener('click', () => {
-        const row = document.getElementById(rowId);
-        if (row) {
-          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          row.classList.add('bg-yellow-100');
-          setTimeout(() => row.classList.remove('bg-yellow-100'), 2000);
-        }
-        container.removeChild(toast);
-      });
-
-      container.appendChild(toast);
-      setTimeout(() => {
-        toast.classList.add('opacity-0', 'transition', 'duration-500');
-        setTimeout(() => container.removeChild(toast), 500);
-      }, 5000);
-    }
-
-    async function markAsRead(id) {
+    async updatePatient() {
       const { data, error } = await supabase
-        .from('feedback')
-        .update({ is_new: false })
-        .eq('id', id);
+        .from('patients')
+        .update({
+          full_name: this.editPatientData.full_name,
+          email: this.editPatientData.email,
+          phone: this.editPatientData.phone,
+          status: this.editPatientData.status
+        })
+        .eq('id', this.editPatientData.id);
+      if(error) return alert(error.message);
+      const index = this.patients.findIndex(p => p.id === this.editPatientData.id);
+      if(index !== -1) this.patients[index] = data[0];
+      this.showEditModal = false;
+    },
 
-      if (!error) {
-        allFeedback = allFeedback.map(f => f.id === id ? {...f, is_new:false} : f);
-        renderFeedbackTable(allFeedback);
+    deletePatient(patient) {
+      if(confirm("Are you sure you want to delete this patient?")){
+        supabase.from('patients').delete().eq('id', patient.id);
+        this.patients = this.patients.filter(p => p.id !== patient.id);
       }
+    },
+
+    async addPatient() {
+      if(!this.newPatient.full_name || !this.newPatient.email || !this.newPatient.phone)
+        return alert("Please fill all fields");
+      const { data, error } = await supabase.from('patients').insert([this.newPatient]);
+      if(error) return alert(error.message);
+      this.patients.unshift(data[0]);
+      this.newPatient = { full_name:'', email:'', phone:'', status:'active' };
+      this.showAddForm = false;
     }
+  }
+}
+</script>
 
-    // Real-time subscription
-    supabase.from('feedback').on('INSERT', payload => {
-      allFeedback.unshift(payload.new);
-      renderFeedbackTable(allFeedback);
-      showToast(`New feedback from ${payload.new.name}`, `feedback-${payload.new.id}`);
-      document.getElementById('total-feedback').innerText = allFeedback.length;
-    }).subscribe();
-
-    // Search functionality
-    document.getElementById('search-input').addEventListener('input', e => {
-      const query = e.target.value.toLowerCase();
-      const filtered = allFeedback.filter(f => 
-        f.name.toLowerCase().includes(query) ||
-        f.email.toLowerCase().includes(query) ||
-        f.message.toLowerCase().includes(query)
-      );
-      renderFeedbackTable(filtered);
-    });
-
-    fetchAndUpdateFeedback();
-    setInterval(fetchAndUpdateFeedback, 60000);
-  </script>
 </body>
 </html>
