@@ -1,142 +1,123 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Patients Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@supabase/supabase-js"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50 min-h-screen p-6">
+  <div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+      <h1 class="text-2xl font-semibold">Patients</h1>
+      <button id="addPatientBtn" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700">
+        Add Patient
+      </button>
+    </div>
 
-  <!-- Header -->
-  <header class="bg-blue-600 text-white p-4">
-    <h1 class="text-xl font-bold">Patients Management</h1>
-  </header>
-
-  <!-- Table -->
-  <main class="p-4">
-    <div class="bg-white shadow rounded-lg p-4">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-semibold">Patients List</h2>
-        <button id="addPatientBtn" 
-                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          Add Patient
-        </button>
-      </div>
-      <table class="w-full border">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="p-2 border">Full Name</th>
-            <th class="p-2 border">Email</th>
-            <th class="p-2 border">Phone</th>
-            <th class="p-2 border">Service</th>
+    <!-- Patients Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full border border-gray-200 rounded">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left">Full Name</th>
+            <th class="px-4 py-2 text-left">Email</th>
+            <th class="px-4 py-2 text-left">Phone</th>
+            <th class="px-4 py-2 text-left">Service</th>
           </tr>
         </thead>
-        <tbody id="patientsTable" class="text-center">
-          <!-- Rows will load here -->
+        <tbody id="patientsTable" class="divide-y divide-gray-200">
+          <!-- Rows auto-inserted -->
         </tbody>
       </table>
     </div>
-  </main>
+  </div>
 
   <!-- Add Patient Modal -->
-  <div id="addPatientModal" class="fixed inset-0 hidden bg-black bg-opacity-50 flex items-center justify-center">
-    <div class="bg-white rounded-lg shadow-lg p-6 w-96">
-      <h2 class="text-lg font-bold mb-4">Add Patient</h2>
-      <form id="addPatientForm" class="space-y-4">
-        <input type="text" id="fullName" placeholder="Full Name" class="w-full p-2 border rounded" required>
-        <input type="email" id="email" placeholder="Email" class="w-full p-2 border rounded" required>
-        <input type="text" id="phone" placeholder="Phone Number" class="w-full p-2 border rounded" required>
-        <input type="text" id="service" placeholder="Service" class="w-full p-2 border rounded" required>
+  <div id="patientModal" class="hidden fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white rounded-lg shadow-lg w-full max-w-md p-6">
+      <h2 class="text-xl font-semibold mb-4">Add Patient</h2>
+      <form id="patientForm" class="space-y-4">
+        <input type="text" id="full_name" placeholder="Full Name" class="w-full border rounded px-3 py-2" required>
+        <input type="email" id="email" placeholder="Email" class="w-full border rounded px-3 py-2" required>
+        <input type="tel" id="phone" placeholder="Phone" class="w-full border rounded px-3 py-2" required>
+        <input type="text" id="service" placeholder="Service" class="w-full border rounded px-3 py-2" required>
 
-        <div class="flex justify-end space-x-2">
-          <button type="button" id="cancelBtn" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Submit</button>
+        <div class="flex justify-end space-x-3">
+          <button type="button" id="cancelBtn" class="px-4 py-2 border rounded">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700">Submit</button>
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // 🔹 Initialize Supabase
-    const supabaseUrl = "YOUR_SUPABASE_URL";   // ⬅️ Replace with your Supabase project URL
-    const supabaseKey = "YOUR_SUPABASE_KEY";   // ⬅️ Replace with your anon key
-    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+    // 🔑 Replace with your Supabase credentials
+    const supabaseUrl = "https://YOUR_PROJECT.supabase.co";
+    const supabaseKey = "YOUR_ANON_KEY";
+    const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
     const addPatientBtn = document.getElementById("addPatientBtn");
-    const addPatientModal = document.getElementById("addPatientModal");
+    const modal = document.getElementById("patientModal");
     const cancelBtn = document.getElementById("cancelBtn");
-    const addPatientForm = document.getElementById("addPatientForm");
-    const patientsTable = document.getElementById("patientsTable");
+    const form = document.getElementById("patientForm");
+    const tableBody = document.getElementById("patientsTable");
 
-    // 🔹 Open modal
-    addPatientBtn.addEventListener("click", () => {
-      addPatientModal.classList.remove("hidden");
-    });
+    // Show modal
+    addPatientBtn.addEventListener("click", () => modal.classList.remove("hidden"));
+    cancelBtn.addEventListener("click", () => modal.classList.add("hidden"));
 
-    // 🔹 Close modal
-    cancelBtn.addEventListener("click", () => {
-      addPatientModal.classList.add("hidden");
-    });
-
-    // 🔹 Fetch and render patients
-    async function loadPatients() {
-      const { data, error } = await supabase.from("patients").select("*");
-      if (error) {
-        console.error("Error loading patients:", error);
-        return;
-      }
-      patientsTable.innerHTML = "";
-      data.forEach(patient => {
-        addRow(patient);
-      });
-    }
-
-    // 🔹 Insert patient row into table
-    function addRow(patient) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td class="p-2 border">${patient.full_name}</td>
-        <td class="p-2 border">${patient.email}</td>
-        <td class="p-2 border">${patient.phone}</td>
-        <td class="p-2 border">${patient.service}</td>
-      `;
-      patientsTable.appendChild(row);
-    }
-
-    // 🔹 Handle form submission
-    addPatientForm.addEventListener("submit", async (e) => {
+    // Insert patient
+    form.addEventListener("submit", async (e) => {
       e.preventDefault();
-
-      const fullName = document.getElementById("fullName").value;
+      const full_name = document.getElementById("full_name").value;
       const email = document.getElementById("email").value;
       const phone = document.getElementById("phone").value;
       const service = document.getElementById("service").value;
 
-      const { data, error } = await supabase.from("patients").insert([
-        { full_name: fullName, email: email, phone: phone, service: service }
-      ]);
-
+      const { error } = await supabaseClient.from("patients").insert([{ full_name, email, phone, service }]);
       if (error) {
-        console.error("Error adding patient:", error);
+        alert("Error: " + error.message);
       } else {
-        addPatientModal.classList.add("hidden");
-        addPatientForm.reset();
+        modal.classList.add("hidden");
+        form.reset();
       }
     });
 
-    // 🔹 Listen for realtime changes
-    supabase.channel("patients-channel")
-      .on("postgres_changes", { event: "*", schema: "public", table: "patients" }, payload => {
-        console.log("Realtime update:", payload);
-        if (payload.eventType === "INSERT") {
-          addRow(payload.new);
-        }
+    // Load patients into table
+    async function loadPatients() {
+      const { data, error } = await supabaseClient.from("patients").select("*");
+      if (error) {
+        console.error("Error loading patients:", error);
+        return;
+      }
+      renderPatients(data);
+    }
+
+    function renderPatients(patients) {
+      tableBody.innerHTML = "";
+      patients.forEach((p) => {
+        tableBody.innerHTML += `
+          <tr>
+            <td class="px-4 py-2">${p.full_name}</td>
+            <td class="px-4 py-2">${p.email}</td>
+            <td class="px-4 py-2">${p.phone}</td>
+            <td class="px-4 py-2">${p.service}</td>
+          </tr>`;
+      });
+    }
+
+    // ✅ Real-time subscription
+    supabaseClient
+      .channel("realtime-patients")
+      .on("postgres_changes", { event: "*", schema: "public", table: "patients" }, (payload) => {
+        console.log("Change received!", payload);
+        loadPatients();
       })
       .subscribe();
 
-    // 🔹 Initial load
+    // Load on first visit
     loadPatients();
   </script>
 </body>
