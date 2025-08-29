@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Patients | Yanet Dental Clinic</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -23,13 +24,22 @@
   </header>
 
   <!-- Main Content -->
-  <div class="container mx-auto p-4 pt-20">
-    
+  <div class="container mx-auto p-4 pt-20" x-data="patientsSection()" x-init="init()">
+
+    <!-- Search Bar -->
+    <div class="mb-4 flex items-center">
+      <input type="text" x-model="searchQuery" placeholder="Search patients..." 
+        class="flex-1 border border-gray-300 rounded-l px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button @click="searchQuery=''" class="bg-blue-500 text-white px-3 py-2 rounded-r">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+
     <!-- Total Patients Card -->
     <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
       <div class="bg-white shadow-md rounded-lg p-6">
         <h2 class="text-gray-500">Total Patients</h2>
-        <p id="total-patients" class="text-3xl font-bold mt-2">0</p>
+        <p x-text="patients.length" class="text-3xl font-bold mt-2">0</p>
       </div>
     </div>
 
@@ -41,54 +51,113 @@
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Appointments</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Appointment</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
           </tr>
         </thead>
-        <tbody id="patients-table-body" class="bg-white divide-y divide-gray-200">
-          <!-- Patients will be populated here -->
+        <tbody class="bg-white divide-y divide-gray-200">
+          <template x-for="patient in filteredPatients()" :key="patient.email">
+            <tr>
+              <td class="px-4 py-2 text-sm font-semibold" x-text="patient.patient_name"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.phone"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.email"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.totalAppointments"></td>
+              <td class="px-4 py-2 text-sm" x-text="patient.lastAppointment.date + ' ' + patient.lastAppointment.time"></td>
+              <td class="px-4 py-2 text-sm">
+                <span x-show="patient.lastAppointment.is_new" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">NEW</span>
+                <span x-show="!patient.lastAppointment.is_new" x-text="patient.lastAppointment.status.toUpperCase()" 
+                  :class="{
+                    'text-green-600': patient.lastAppointment.status==='confirmed',
+                    'text-yellow-600': patient.lastAppointment.status==='rescheduled',
+                    'text-red-500': patient.lastAppointment.status==='cancelled',
+                    'text-gray-700': patient.lastAppointment.status==='new'
+                  }"></span>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
 
   </div>
 
-  <!-- Supabase Setup -->
+  <!-- Supabase & Alpine -->
   <script>
     const SUPABASE_URL = 'YOUR_SUPABASE_URL';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    async function fetchAndUpdatePatients() {
-      try {
-        const { data, error } = await supabase
-          .from('patients')
-          .select('*')
-          .order('created_at', { ascending: false });
+    function patientsSection() {
+      return {
+        appointments: [],
+        patients: [],
+        searchQuery: '',
 
-        if (error) throw error;
+        async init() {
+          await this.fetchAppointments();
+          this.groupPatients();
 
-        document.getElementById('total-patients').innerText = data.length;
+          // Real-time subscriptions
+          supabase.from('appointments').on('INSERT', payload => {
+            this.appointments.unshift(payload.new);
+            this.groupPatients();
+          }).subscribe();
 
-        const tbody = document.getElementById('patients-table-body');
-        tbody.innerHTML = '';
-        data.forEach(patient => {
-          tbody.innerHTML += `<tr>
-            <td class="py-2 px-4">${patient.name}</td>
-            <td class="py-2 px-4">${patient.phone}</td>
-            <td class="py-2 px-4">${patient.email}</td>
-            <td class="py-2 px-4">
-              <button class="text-blue-500 hover:underline">View</button>
-            </td>
-          </tr>`;
-        });
+          supabase.from('appointments').on('UPDATE', payload => {
+            const index = this.appointments.findIndex(a => a.id === payload.new.id);
+            if(index !== -1) this.appointments[index] = payload.new;
+            this.groupPatients();
+          }).subscribe();
+        },
 
-      } catch (error) {
-        console.error('Error fetching patients:', error);
+        async fetchAppointments() {
+          const { data } = await supabase.from('appointments').select('*');
+          this.appointments = data || [];
+        },
+
+        groupPatients() {
+          const patientMap = {};
+          this.appointments.forEach(appt => {
+            if(!patientMap[appt.email]) {
+              patientMap[appt.email] = {
+                patient_name: appt.patient_name,
+                email: appt.email,
+                phone: appt.phone,
+                totalAppointments: 0,
+                lastAppointment: { date:'', time:'', status:'', is_new:false }
+              };
+            }
+
+            patientMap[appt.email].totalAppointments += 1;
+
+            const last = patientMap[appt.email].lastAppointment;
+            const apptDate = new Date(appt.date + ' ' + appt.time);
+            const lastDate = last.date ? new Date(last.date + ' ' + last.time) : null;
+
+            if(!lastDate || apptDate > lastDate) {
+              patientMap[appt.email].lastAppointment = {
+                date: appt.date,
+                time: appt.time,
+                status: appt.status,
+                is_new: appt.is_new
+              };
+            }
+          });
+
+          this.patients = Object.values(patientMap);
+        },
+
+        filteredPatients() {
+          if(!this.searchQuery) return this.patients;
+          return this.patients.filter(p => 
+            p.patient_name.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            p.email.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+            p.phone.toLowerCase().includes(this.searchQuery.toLowerCase())
+          );
+        }
       }
     }
-
-    fetchAndUpdatePatients();
-    setInterval(fetchAndUpdatePatients, 60000); // Refresh every 1 minute
   </script>
 
 </body>
