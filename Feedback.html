@@ -10,7 +10,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-  <!-- Header with Back Arrow -->
+  <!-- Header -->
   <header class="bg-white shadow-md fixed top-0 left-0 w-full z-50">
     <div class="container mx-auto px-4 py-3 flex items-center">
       <button onclick="history.back()" class="text-gray-600 hover:text-gray-900 mr-4">
@@ -19,30 +19,21 @@
         </svg>
       </button>
       <h1 class="text-xl font-semibold text-gray-700 mx-auto">Feedback</h1>
+      <div class="relative ml-auto">
+        <input id="search-input" type="text" placeholder="Search..." class="border rounded px-2 py-1" />
+        <i class="fas fa-search absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"></i>
+      </div>
     </div>
   </header>
 
   <!-- Main Content -->
   <div class="container mx-auto p-4 pt-20">
-
     <!-- Total Feedback Card -->
     <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
-      <div class="bg-white shadow-md rounded-lg p-6 flex justify-between items-center">
-        <div>
-          <h2 class="text-gray-500">Total Feedback</h2>
-          <p id="total-feedback" class="text-3xl font-bold mt-2">0</p>
-        </div>
-        <div id="new-feedback-badge" class="bg-red-500 text-white px-3 py-1 rounded-full font-bold hidden">0 NEW</div>
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Feedback</h2>
+        <p id="total-feedback" class="text-3xl font-bold mt-2">0</p>
       </div>
-    </div>
-
-    <!-- Search Bar -->
-    <div class="mb-4 flex items-center space-x-2">
-      <input type="text" id="search-feedback" placeholder="Search by name, email, message" 
-             class="flex-1 border px-3 py-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
-      <button onclick="applySearch()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-        <i class="fas fa-search"></i>
-      </button>
     </div>
 
     <!-- Feedback Table -->
@@ -50,21 +41,22 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody id="feedback-table-body" class="bg-white divide-y divide-gray-200">
-          <!-- Feedback rows populated dynamically -->
+          <!-- Feedback rows populate here -->
         </tbody>
       </table>
     </div>
-
   </div>
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-16 right-4 space-y-2 z-50"></div>
 
   <!-- Supabase Setup -->
   <script>
@@ -83,73 +75,89 @@
 
         if (error) throw error;
 
-        allFeedback = data || [];
+        allFeedback = data;
         document.getElementById('total-feedback').innerText = allFeedback.length;
 
-        // Count new feedback
-        const newCount = allFeedback.filter(fb => !fb.is_reviewed).length;
-        const badge = document.getElementById('new-feedback-badge');
-        if (newCount > 0) {
-          badge.innerText = `${newCount} NEW`;
-          badge.classList.remove('hidden');
-        } else {
-          badge.classList.add('hidden');
-        }
-
-        renderFeedback(allFeedback);
+        renderFeedbackTable(allFeedback);
       } catch (error) {
         console.error('Error fetching feedback:', error);
       }
     }
 
-    function renderFeedback(feedbackArray) {
+    function renderFeedbackTable(feedbackData) {
       const tbody = document.getElementById('feedback-table-body');
       tbody.innerHTML = '';
-      feedbackArray.forEach(fb => {
-        tbody.innerHTML += `<tr>
+      feedbackData.forEach(feedback => {
+        tbody.innerHTML += `<tr id="feedback-${feedback.id}" class="border-b">
+          <td class="py-2 px-4">${feedback.name}</td>
+          <td class="py-2 px-4">${feedback.email}</td>
+          <td class="py-2 px-4">${feedback.message}</td>
           <td class="py-2 px-4">
-            ${!fb.is_reviewed ? '<span class="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">NEW</span>' : ''}
+            ${feedback.is_new ? '<span class="bg-red-500 text-white px-2 py-0.5 rounded text-xs font-bold">NEW</span>' : 'Read'}
           </td>
-          <td class="py-2 px-4">${fb.name}</td>
-          <td class="py-2 px-4">${fb.email}</td>
-          <td class="py-2 px-4">${fb.message}</td>
-          <td class="py-2 px-4">${fb.is_reviewed ? 'Yes' : 'No'}</td>
-          <td class="py-2 px-4 flex space-x-2">
-            ${!fb.is_reviewed ? `<button onclick="markReviewed(${fb.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Mark Reviewed</button>` : ''}
+          <td class="py-2 px-4">
+            <button class="text-blue-500 hover:underline" onclick="markAsRead('${feedback.id}')">Mark as Read</button>
           </td>
         </tr>`;
       });
     }
 
-    function applySearch() {
-      const query = document.getElementById('search-feedback').value.toLowerCase();
-      const filtered = allFeedback.filter(fb => 
-        fb.name.toLowerCase().includes(query) || 
-        fb.email.toLowerCase().includes(query) || 
-        fb.message.toLowerCase().includes(query)
-      );
-      renderFeedback(filtered);
+    function showToast(message, rowId) {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = 'bg-blue-500 text-white px-4 py-2 rounded shadow-md cursor-pointer animate-slide-in';
+      toast.innerText = message;
+
+      toast.addEventListener('click', () => {
+        const row = document.getElementById(rowId);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('bg-yellow-100');
+          setTimeout(() => row.classList.remove('bg-yellow-100'), 2000);
+        }
+        container.removeChild(toast);
+      });
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'transition', 'duration-500');
+        setTimeout(() => container.removeChild(toast), 500);
+      }, 5000);
     }
 
-    async function markReviewed(id) {
-      const { error } = await supabase.from('feedback').update({ is_reviewed: true }).eq('id', id);
-      if (error) return console.error('Error marking reviewed:', error);
+    async function markAsRead(id) {
+      const { data, error } = await supabase
+        .from('feedback')
+        .update({ is_new: false })
+        .eq('id', id);
 
-      allFeedback = allFeedback.map(fb => fb.id === id ? { ...fb, is_reviewed: true } : fb);
-      fetchAndUpdateFeedback();
+      if (!error) {
+        allFeedback = allFeedback.map(f => f.id === id ? {...f, is_new:false} : f);
+        renderFeedbackTable(allFeedback);
+      }
     }
-
-    // Initial fetch
-    fetchAndUpdateFeedback();
 
     // Real-time subscription
     supabase.from('feedback').on('INSERT', payload => {
       allFeedback.unshift(payload.new);
-      fetchAndUpdateFeedback();
+      renderFeedbackTable(allFeedback);
+      showToast(`New feedback from ${payload.new.name}`, `feedback-${payload.new.id}`);
+      document.getElementById('total-feedback').innerText = allFeedback.length;
     }).subscribe();
 
-    setInterval(fetchAndUpdateFeedback, 60000); // Refresh every 1 minute
-  </script>
+    // Search functionality
+    document.getElementById('search-input').addEventListener('input', e => {
+      const query = e.target.value.toLowerCase();
+      const filtered = allFeedback.filter(f => 
+        f.name.toLowerCase().includes(query) ||
+        f.email.toLowerCase().includes(query) ||
+        f.message.toLowerCase().includes(query)
+      );
+      renderFeedbackTable(filtered);
+    });
 
+    fetchAndUpdateFeedback();
+    setInterval(fetchAndUpdateFeedback, 60000);
+  </script>
 </body>
 </html>
