@@ -10,7 +10,7 @@
 </head>
 <body class="bg-gray-100 min-h-screen">
 
-  <!-- Header -->
+  <!-- Header with Back Arrow -->
   <header class="bg-white shadow-md fixed top-0 left-0 w-full z-50">
     <div class="container mx-auto px-4 py-3 flex items-center">
       <button onclick="history.back()" class="text-gray-600 hover:text-gray-900 mr-4">
@@ -22,21 +22,27 @@
     </div>
   </header>
 
+  <!-- Main Content -->
   <div class="container mx-auto p-4 pt-20">
-    
+
     <!-- Total Feedback Card -->
     <div class="grid grid-cols-1 sm:grid-cols-1 gap-4 mb-6">
-      <div class="bg-white shadow-md rounded-lg p-6">
-        <h2 class="text-gray-500">Total Feedback</h2>
-        <p id="total-feedback" class="text-3xl font-bold mt-2">0</p>
+      <div class="bg-white shadow-md rounded-lg p-6 flex justify-between items-center">
+        <div>
+          <h2 class="text-gray-500">Total Feedback</h2>
+          <p id="total-feedback" class="text-3xl font-bold mt-2">0</p>
+        </div>
+        <div id="new-feedback-badge" class="bg-red-500 text-white px-3 py-1 rounded-full font-bold hidden">0 NEW</div>
       </div>
     </div>
 
-    <!-- Search -->
-    <div class="mb-4 relative">
-      <input id="searchInput" type="text" placeholder="Search by name, email or message..." 
-             class="w-full border rounded px-4 py-2 pr-10">
-      <i class="fas fa-search absolute right-3 top-2.5 text-gray-400"></i>
+    <!-- Search Bar -->
+    <div class="mb-4 flex items-center space-x-2">
+      <input type="text" id="search-feedback" placeholder="Search by name, email, message" 
+             class="flex-1 border px-3 py-2 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"/>
+      <button onclick="applySearch()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
+        <i class="fas fa-search"></i>
+      </button>
     </div>
 
     <!-- Feedback Table -->
@@ -44,92 +50,105 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">New</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reviewed</th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
           </tr>
         </thead>
         <tbody id="feedback-table-body" class="bg-white divide-y divide-gray-200">
-          <!-- Feedback will populate here -->
+          <!-- Feedback rows populated dynamically -->
         </tbody>
       </table>
     </div>
 
   </div>
 
+  <!-- Supabase Setup -->
   <script>
     const SUPABASE_URL = 'YOUR_SUPABASE_URL';
     const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
     const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let feedbackData = [];
+    let allFeedback = [];
 
-    function renderFeedbackTable() {
+    async function fetchAndUpdateFeedback() {
+      try {
+        const { data, error } = await supabase
+          .from('feedback')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        allFeedback = data || [];
+        document.getElementById('total-feedback').innerText = allFeedback.length;
+
+        // Count new feedback
+        const newCount = allFeedback.filter(fb => !fb.is_reviewed).length;
+        const badge = document.getElementById('new-feedback-badge');
+        if (newCount > 0) {
+          badge.innerText = `${newCount} NEW`;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+
+        renderFeedback(allFeedback);
+      } catch (error) {
+        console.error('Error fetching feedback:', error);
+      }
+    }
+
+    function renderFeedback(feedbackArray) {
       const tbody = document.getElementById('feedback-table-body');
       tbody.innerHTML = '';
-      feedbackData.forEach(fb => {
+      feedbackArray.forEach(fb => {
         tbody.innerHTML += `<tr>
+          <td class="py-2 px-4">
+            ${!fb.is_reviewed ? '<span class="bg-red-500 text-white px-2 py-0.5 rounded-full text-xs font-bold">NEW</span>' : ''}
+          </td>
           <td class="py-2 px-4">${fb.name}</td>
           <td class="py-2 px-4">${fb.email}</td>
           <td class="py-2 px-4">${fb.message}</td>
-          <td class="py-2 px-4">${new Date(fb.created_at).toLocaleDateString()}</td>
-          <td class="py-2 px-4 font-semibold ${fb.is_reviewed ? 'text-green-600' : 'text-red-500'}">
-            ${fb.is_reviewed ? 'Reviewed' : 'New'}
-          </td>
-          <td class="py-2 px-4">
-            ${!fb.is_reviewed ? `<button onclick="markReviewed('${fb.id}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs">Mark as Reviewed</button>` : ''}
+          <td class="py-2 px-4">${fb.is_reviewed ? 'Yes' : 'No'}</td>
+          <td class="py-2 px-4 flex space-x-2">
+            ${!fb.is_reviewed ? `<button onclick="markReviewed(${fb.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs">Mark Reviewed</button>` : ''}
           </td>
         </tr>`;
       });
-      document.getElementById('total-feedback').innerText = feedbackData.length;
     }
 
-    async function fetchInitialFeedback() {
-      const { data, error } = await supabase
-        .from('feedback')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) return console.error('Error fetching feedback:', error);
-      feedbackData = data.map(fb => ({ ...fb, is_reviewed: fb.is_reviewed || false }));
-      renderFeedbackTable();
+    function applySearch() {
+      const query = document.getElementById('search-feedback').value.toLowerCase();
+      const filtered = allFeedback.filter(fb => 
+        fb.name.toLowerCase().includes(query) || 
+        fb.email.toLowerCase().includes(query) || 
+        fb.message.toLowerCase().includes(query)
+      );
+      renderFeedback(filtered);
     }
 
     async function markReviewed(id) {
-      await supabase.from('feedback').update({ is_reviewed: true }).eq('id', id);
-      const fb = feedbackData.find(f => f.id === id);
-      if(fb) fb.is_reviewed = true;
-      renderFeedbackTable();
+      const { error } = await supabase.from('feedback').update({ is_reviewed: true }).eq('id', id);
+      if (error) return console.error('Error marking reviewed:', error);
+
+      allFeedback = allFeedback.map(fb => fb.id === id ? { ...fb, is_reviewed: true } : fb);
+      fetchAndUpdateFeedback();
     }
 
-    fetchInitialFeedback();
+    // Initial fetch
+    fetchAndUpdateFeedback();
 
     // Real-time subscription
-    supabase
-      .from('feedback')
-      .on('INSERT', payload => {
-        feedbackData.unshift({ ...payload.new, is_reviewed: false });
-        renderFeedbackTable();
-      })
-      .on('UPDATE', payload => {
-        const index = feedbackData.findIndex(f => f.id === payload.new.id);
-        if(index !== -1) feedbackData[index] = payload.new;
-        renderFeedbackTable();
-      })
-      .subscribe();
+    supabase.from('feedback').on('INSERT', payload => {
+      allFeedback.unshift(payload.new);
+      fetchAndUpdateFeedback();
+    }).subscribe();
 
-    // Search functionality
-    document.getElementById('searchInput').addEventListener('input', function() {
-      const filter = this.value.toLowerCase();
-      const rows = document.querySelectorAll('#feedback-table-body tr');
-      rows.forEach(row => {
-        const text = row.innerText.toLowerCase();
-        row.style.display = text.includes(filter) ? '' : 'none';
-      });
-    });
+    setInterval(fetchAndUpdateFeedback, 60000); // Refresh every 1 minute
   </script>
 
 </body>
