@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports | Yanet Dental Clinic</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/supabase.min.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yanet Dental Clinic Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/supabase.min.js"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 flex">
 
-  <!-- Header with Back Arrow -->
-  <header class="bg-white shadow-md fixed top-0 left-0 w-full z-50">
-    <div class="container mx-auto px-4 py-3 flex items-center">
-      <button onclick="history.back()" class="text-gray-600 hover:text-gray-900 mr-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 inline-block" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <h1 class="text-xl font-semibold text-gray-700">Reports</h1>
-    </div>
-  </header>
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md h-screen fixed">
+    <div class="p-6 font-bold text-lg text-gray-700 border-b">Admin Panel</div>
+    <nav class="mt-6">
+      <ul class="space-y-2">
+        <li><a href="dashboard.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Dashboard</a></li>
+        <li><a href="appointments.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Appointments</a></li>
+        <li><a href="patients.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Patients</a></li>
+        <li><a href="services.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Services</a></li>
+        <li><a href="reports.html" class="block px-6 py-2 bg-gray-100 rounded">Reports</a></li>
+        <li><a href="settings.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Settings</a></li>
+        <li><a href="feedback.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Feedback</a></li>
+      </ul>
+    </nav>
+  </aside>
 
   <!-- Main Content -->
-  <div class="container mx-auto p-4 pt-20">
+  <main class="flex-1 ml-64 p-6">
+
+    <!-- Header -->
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-700">Reports</h1>
+    </header>
 
     <!-- Totals Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -37,13 +46,13 @@
       </div>
     </div>
 
-    <!-- Totals Bar Chart -->
+    <!-- Overall Totals Chart -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
       <h2 class="text-gray-700 text-xl font-semibold mb-4">Overall Totals</h2>
       <canvas id="totalsBarChart" height="100"></canvas>
     </div>
 
-    <!-- Monthly Growth Line Chart -->
+    <!-- Monthly Growth Chart -->
     <div class="bg-white shadow-md rounded-lg p-6 mb-6">
       <h2 class="text-gray-700 text-xl font-semibold mb-4">Monthly Growth</h2>
       <canvas id="monthlyGrowthChart" height="100"></canvas>
@@ -52,8 +61,6 @@
     <!-- Marketing Section -->
     <div class="bg-white shadow-md rounded-lg p-6">
       <h2 class="text-gray-700 text-xl font-semibold mb-4">Marketing</h2>
-      
-      <!-- Marketing Totals Cards -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <div class="bg-blue-100 p-4 rounded-lg text-center">
           <p class="text-gray-700 font-semibold">Leads</p>
@@ -69,23 +76,14 @@
         </div>
       </div>
 
-      <!-- Marketing Table -->
       <div class="overflow-x-auto">
         <table class="min-w-full bg-white">
           <thead>
             <tr class="bg-gray-200 text-gray-700">
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('campaign')">
-                Campaign <span id="arrow-campaign"></span>
-              </th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('leads')">
-                Leads <span id="arrow-leads"></span>
-              </th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('conversions')">
-                Conversions <span id="arrow-conversions"></span>
-              </th>
-              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('revenue')">
-                Revenue <span id="arrow-revenue"></span>
-              </th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('campaign')">Campaign <span id="arrow-campaign"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('leads')">Leads <span id="arrow-leads"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('conversions')">Conversions <span id="arrow-conversions"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('revenue')">Revenue <span id="arrow-revenue"></span></th>
             </tr>
           </thead>
           <tbody id="marketing-table-body"></tbody>
@@ -93,15 +91,14 @@
       </div>
     </div>
 
-  </div>
+  </main>
 
+  <!-- ===== JavaScript ===== -->
   <script>
-    // ===== Supabase Client Setup =====
     const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
     const supabaseKey = 'YOUR_ANON_KEY';
     const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    // ===== HTML Elements =====
     const totalAppointmentsEl = document.getElementById('total-appointments');
     const totalPatientsEl = document.getElementById('total-patients');
     const marketingTableBody = document.getElementById('marketing-table-body');
@@ -109,14 +106,12 @@
     const marketingConversionsEl = document.getElementById('marketing-conversions');
     const marketingRevenueEl = document.getElementById('marketing-revenue');
 
-    // ===== Variables =====
     let totalAppointments = 0;
     let totalPatients = 0;
     let monthlyGrowthData = { labels: [], values: [] };
     let marketingData = [];
     let marketingSortDirection = {};
 
-    // ===== Charts =====
     const totalsCtx = document.getElementById('totalsBarChart').getContext('2d');
     const totalsChart = new Chart(totalsCtx, {
       type: 'bar',
@@ -131,7 +126,6 @@
       options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
     });
 
-    // ===== Update Displays =====
     function updateTotalsDisplay() {
       totalAppointmentsEl.innerText = totalAppointments;
       totalPatientsEl.innerText = totalPatients;
@@ -150,20 +144,15 @@
         </tr>`;
       });
 
-      const totalLeads = marketingData.reduce((sum, i)=>sum+i.leads,0);
-      const totalConversions = marketingData.reduce((sum,i)=>sum+i.conversions,0);
-      const totalRevenue = marketingData.reduce((sum,i)=>sum+i.revenue,0);
-
-      marketingLeadsEl.innerText = totalLeads;
-      marketingConversionsEl.innerText = totalConversions;
-      marketingRevenueEl.innerText = `$${totalRevenue}`;
+      marketingLeadsEl.innerText = marketingData.reduce((sum, i)=>sum+i.leads,0);
+      marketingConversionsEl.innerText = marketingData.reduce((sum,i)=>sum+i.conversions,0);
+      marketingRevenueEl.innerText = `$${marketingData.reduce((sum,i)=>sum+i.revenue,0)}`;
     }
 
     function sortMarketing(column) {
       marketingSortDirection[column] = marketingSortDirection[column] === 'asc' ? 'desc' : 'asc';
       ['campaign','leads','conversions','revenue'].forEach(col => document.getElementById(`arrow-${col}`).innerText='');
       document.getElementById(`arrow-${column}`).innerText = marketingSortDirection[column]==='asc'?'↑':'↓';
-
       marketingData.sort((a,b)=>{
         let valA = a[column]; let valB = b[column];
         if(['leads','conversions','revenue'].includes(column)){ valA=Number(valA); valB=Number(valB); }
@@ -171,26 +160,23 @@
         if(valA>valB) return marketingSortDirection[column]==='asc'?1:-1;
         return 0;
       });
-
       updateMarketingDisplay();
     }
 
-    // ===== Fetch Data from Supabase =====
     async function fetchAndUpdateReports() {
       try {
         const { data: appointments } = await supabase.from('appointments').select('*');
         const { data: patients } = await supabase.from('patients').select('*');
-        const { data: marketing } = await supabase.from('marketing').select('*'); // optional
-
+        const { data: marketing } = await supabase.from('marketing').select('*');
         totalAppointments = appointments.length;
         totalPatients = patients.length;
 
-        // Monthly growth
         const monthlyCounts = {};
         appointments.forEach(a => {
           const month = new Date(a.date).toLocaleString('default',{month:'short',year:'numeric'});
-          monthlyCounts[month] = (monthlyCounts[month]||0)+1;
+          monthlyCounts[monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
         });
+
         monthlyGrowthData.labels = Object.keys(monthlyCounts);
         monthlyGrowthData.values = Object.values(monthlyCounts);
         monthlyGrowthChart.data.labels = monthlyGrowthData.labels;
@@ -200,14 +186,16 @@
         marketingData = marketing || [];
         updateTotalsDisplay();
         updateMarketingDisplay();
-      } catch(err) {
+      } catch (err) {
         console.error('Error fetching Supabase data:', err);
       }
     }
 
+    // Initial fetch
     fetchAndUpdateReports();
-    setInterval(fetchAndUpdateReports,60000); // refresh every 60s
 
+    // Refresh every 60 seconds
+    setInterval(fetchAndUpdateReports, 60000);
   </script>
 </body>
 </html>
