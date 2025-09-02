@@ -1,197 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reports</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://unpkg.com/@supabase/supabase-js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      display: flex;
-    }
-    .sidebar {
-      width: 220px;
-      background: #2c3e50;
-      color: white;
-      height: 100vh;
-      padding: 20px;
-    }
-    .sidebar h2 {
-      margin-top: 0;
-    }
-    .sidebar a {
-      display: block;
-      color: white;
-      text-decoration: none;
-      margin: 10px 0;
-    }
-    .main {
-      flex: 1;
-      padding: 20px;
-      background: #f4f6f8;
-      overflow-y: auto;
-    }
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .cards {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 20px;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      flex: 1;
-      min-width: 200px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .chart-container {
-      margin-top: 40px;
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    table th, table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-    }
-    table th {
-      background: #2c3e50;
-      color: white;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yanet Dental Clinic Admin</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/supabase.min.js"></script>
 </head>
-<body>
-  <div class="sidebar">
-    <h2>Clinic</h2>
-    <a href="index.html">Dashboard</a>
-    <a href="patients.html">Patients</a>
-    <a href="appointments.html">Appointments</a>
-    <a href="reports.html">Reports</a>
-  </div>
+<body class="bg-gray-100 flex">
 
-  <div class="main">
-    <div class="header">
-      <h1>Reports</h1>
-    </div>
+  <!-- Sidebar -->
+  <aside class="w-64 bg-white shadow-md h-screen fixed">
+    <div class="p-6 font-bold text-lg text-gray-700 border-b">Admin Panel</div>
+    <nav class="mt-6">
+      <ul class="space-y-2">
+        <li><a href="dashboard.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Dashboard</a></li>
+        <li><a href="appointments.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Appointments</a></li>
+        <li><a href="patients.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Patients</a></li>
+        <li><a href="services.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Services</a></li>
+        <li><a href="reports.html" class="block px-6 py-2 bg-gray-100 rounded">Reports ↑</a></li>
+        <li><a href="settings.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Settings</a></li>
+        <li><a href="feedback.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Feedback</a></li>
+      </ul>
+    </nav>
+  </aside>
 
-    <div class="cards">
-      <div class="card">
-        <h3>Total Patients</h3>
-        <p id="totalPatients">0</p>
+  <!-- Main Content -->
+  <main class="flex-1 ml-64 p-6">
+
+    <!-- Header -->
+    <header class="mb-6">
+      <h1 class="text-2xl font-bold text-gray-700">Reports</h1>
+    </header>
+
+    <!-- Totals Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Appointments</h2>
+        <p id="total-appointments" class="text-3xl font-bold mt-2">0</p>
       </div>
-      <div class="card">
-        <h3>Total Appointments</h3>
-        <p id="totalAppointments">0</p>
-      </div>
-      <div class="card">
-        <h3>Monthly Growth</h3>
-        <p id="monthlyGrowth">0%</p>
+      <div class="bg-white shadow-md rounded-lg p-6">
+        <h2 class="text-gray-500">Total Patients</h2>
+        <p id="total-patients" class="text-3xl font-bold mt-2">0</p>
       </div>
     </div>
 
-    <div class="chart-container">
-      <h3>Appointments Over Time</h3>
-      <canvas id="appointmentsChart"></canvas>
+    <!-- Overall Totals Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Overall Totals</h2>
+      <canvas id="totalsBarChart" height="100"></canvas>
     </div>
 
-    <div class="chart-container">
-      <h3>Marketing Performance</h3>
-      <table id="marketingTable">
-        <thead>
-          <tr>
-            <th>Campaign</th>
-            <th>Leads</th>
-            <th>Conversions</th>
-            <th>Revenue</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+    <!-- Monthly Growth Chart -->
+    <div class="bg-white shadow-md rounded-lg p-6 mb-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Monthly Growth</h2>
+      <canvas id="monthlyGrowthChart" height="100"></canvas>
     </div>
-  </div>
+
+    <!-- Marketing Section -->
+    <div class="bg-white shadow-md rounded-lg p-6">
+      <h2 class="text-gray-700 text-xl font-semibold mb-4">Marketing</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+        <div class="bg-blue-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Leads</p>
+          <p id="marketing-leads" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-green-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Conversions</p>
+          <p id="marketing-conversions" class="text-2xl font-bold mt-2">0</p>
+        </div>
+        <div class="bg-yellow-100 p-4 rounded-lg text-center">
+          <p class="text-gray-700 font-semibold">Revenue</p>
+          <p id="marketing-revenue" class="text-2xl font-bold mt-2">$0</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="min-w-full bg-white">
+          <thead>
+            <tr class="bg-gray-200 text-gray-700">
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('campaign')">Campaign <span id="arrow-campaign"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('leads')">Leads <span id="arrow-leads"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('conversions')">Conversions <span id="arrow-conversions"></span></th>
+              <th class="py-2 px-4 text-left cursor-pointer" onclick="sortMarketing('revenue')">Revenue <span id="arrow-revenue"></span></th>
+            </tr>
+          </thead>
+          <tbody id="marketing-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
 
   <script>
-    // 🔑 Replace with your Supabase credentials
-    const supabaseUrl = "https://YOUR_PROJECT_URL.supabase.co";
-    const supabaseKey = "YOUR_ANON_KEY";
-    const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
+    const supabaseKey = 'YOUR_ANON_KEY';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-    async function loadReports() {
-      // Fetch patients
-      const { data: patients } = await supabase.from("patients").select("*");
-      document.getElementById("totalPatients").innerText = patients?.length || 0;
+    const totalAppointmentsEl = document.getElementById('total-appointments');
+    const totalPatientsEl = document.getElementById('total-patients');
+    const marketingTableBody = document.getElementById('marketing-table-body');
+    const marketingLeadsEl = document.getElementById('marketing-leads');
+    const marketingConversionsEl = document.getElementById('marketing-conversions');
+    const marketingRevenueEl = document.getElementById('marketing-revenue');
 
-      // Fetch appointments
-      const { data: appointments } = await supabase.from("appointments").select("*");
-      document.getElementById("totalAppointments").innerText = appointments?.length || 0;
+    let totalAppointments = 0;
+    let totalPatients = 0;
+    let monthlyGrowthData = { labels: [], values: [] };
+    let marketingData = [];
+    let marketingSortDirection = {};
 
-      // Monthly growth calculation
-      if (appointments && appointments.length > 0) {
+    const totalsCtx = document.getElementById('totalsBarChart').getContext('2d');
+    const totalsChart = new Chart(totalsCtx, {
+      type: 'bar',
+      data: { labels: ['Appointments', 'Patients'], datasets: [{ label: 'Total', data: [0,0], backgroundColor: ['#3B82F6', '#10B981'] }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const monthlyGrowthCtx = document.getElementById('monthlyGrowthChart').getContext('2d');
+    const monthlyGrowthChart = new Chart(monthlyGrowthCtx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Appointments', data: [], borderColor: '#3B82F6', backgroundColor: 'rgba(59,130,246,0.2)', tension: 0.4, fill: true }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    function updateTotalsDisplay() {
+      totalAppointmentsEl.innerText = totalAppointments;
+      totalPatientsEl.innerText = totalPatients;
+      totalsChart.data.datasets[0].data = [totalAppointments, totalPatients];
+      totalsChart.update();
+    }
+
+    function updateMarketingDisplay() {
+      marketingTableBody.innerHTML = '';
+      marketingData.forEach(item => {
+        marketingTableBody.innerHTML += `<tr class="border-b">
+          <td class="py-2 px-4">${item.campaign}</td>
+          <td class="py-2 px-4">${item.leads}</td>
+          <td class="py-2 px-4">${item.conversions}</td>
+          <td class="py-2 px-4">$${item.revenue}</td>
+        </tr>`;
+      });
+
+      marketingLeadsEl.innerText = marketingData.reduce((sum, i)=>sum+i.leads,0);
+      marketingConversionsEl.innerText = marketingData.reduce((sum,i)=>sum+i.conversions,0);
+      marketingRevenueEl.innerText = `$${marketingData.reduce((sum,i)=>sum+i.revenue,0)}`;
+    }
+
+    function sortMarketing(column) {
+      marketingSortDirection[column] = marketingSortDirection[column] === 'asc' ? 'desc' : 'asc';
+      ['campaign','leads','conversions','revenue'].forEach(col => document.getElementById(`arrow-${col}`).innerText='');
+      document.getElementById(`arrow-${column}`).innerText = marketingSortDirection[column]==='asc'?'↑':'↓';
+      marketingData.sort((a,b)=>{
+        let valA = a[column]; let valB = b[column];
+        if(['leads','conversions','revenue'].includes(column)){ valA=Number(valA); valB=Number(valB); }
+        if(valA<valB) return marketingSortDirection[column]==='asc'?-1:1;
+        if(valA>if(valA>valB) return marketingSortDirection[column]==='asc'?1:-1;
+        return 0;
+      });
+      updateMarketingDisplay();
+    }
+
+    async function fetchAndUpdateReports() {
+      try {
+        // Fetch data from Supabase
+        const { data: appointments, error: appointmentsError } = await supabase.from('appointments').select('*');
+        const { data: patients, error: patientsError } = await supabase.from('patients').select('*');
+        const { data: marketing, error: marketingError } = await supabase.from('marketing').select('*');
+
+        if(appointmentsError || patientsError || marketingError){
+          console.error('Supabase fetch error:', appointmentsError || patientsError || marketingError);
+          return;
+        }
+
+        totalAppointments = appointments.length;
+        totalPatients = patients.length;
+
+        // Calculate monthly growth
         const monthlyCounts = {};
         appointments.forEach(a => {
-          const month = new Date(a.date).toLocaleString("default", { month: "short", year: "numeric" });
+          const month = new Date(a.date).toLocaleString('default', {month:'short', year:'numeric'});
           monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
         });
 
-        const months = Object.keys(monthlyCounts);
-        const values = Object.values(monthlyCounts);
+        monthlyGrowthData.labels = Object.keys(monthlyCounts);
+        monthlyGrowthData.values = Object.values(monthlyCounts);
+        monthlyGrowthChart.data.labels = monthlyGrowthData.labels;
+        monthlyGrowthChart.data.datasets[0].data = monthlyGrowthData.values;
+        monthlyGrowthChart.update();
 
-        if (values.length >= 2) {
-          const last = values[values.length - 1];
-          const prev = values[values.length - 2];
-          const growth = ((last - prev) / prev * 100).toFixed(1);
-          document.getElementById("monthlyGrowth").innerText = growth + "%";
-        } else {
-          document.getElementById("monthlyGrowth").innerText = "N/A";
-        }
-
-        // Chart.js graph
-        new Chart(document.getElementById("appointmentsChart"), {
-          type: "line",
-          data: {
-            labels: months,
-            datasets: [{
-              label: "Appointments",
-              data: values,
-              borderColor: "#2c3e50",
-              fill: false
-            }]
-          }
-        });
+        // Marketing data
+        marketingData = marketing || [];
+        updateTotalsDisplay();
+        updateMarketingDisplay();
+      } catch (err) {
+        console.error('Error fetching Supabase data:', err);
       }
-
-      // Marketing table
-      const { data: marketing } = await supabase.from("marketing").select("*");
-      const tbody = document.querySelector("#marketingTable tbody");
-      tbody.innerHTML = "";
-      marketing?.forEach(row => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${row.campaign}</td>
-          <td>${row.leads}</td>
-          <td>${row.conversions}</td>
-          <td>$${row.revenue}</td>
-        `;
-        tbody.appendChild(tr);
-      });
     }
 
-    loadReports();
+    // Initial fetch
+    fetchAndUpdateReports();
+
+    // Refresh every 60 seconds
+    setInterval(fetchAndUpdateReports, 60000);
   </script>
 </body>
 </html>
