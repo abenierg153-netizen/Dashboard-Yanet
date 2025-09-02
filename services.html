@@ -68,6 +68,7 @@
   </div>
 
   <script>
+    // Supabase client setup
     const supabase = supabase.createClient('https://YOUR_PROJECT_URL.supabase.co', 'YOUR_ANON_KEY');
 
     function servicesSection() {
@@ -82,43 +83,49 @@
           await this.fetchTips();
           await this.fetchNews();
 
-          // Real-time subscriptions
-          supabase.from('dental_tips').on('INSERT', payload => {
-            this.tips.push(payload.new);
-          }).subscribe();
+          // Real-time subscriptions (Supabase v2 syntax)
+          supabase
+            .channel('realtime-tips')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dental_tips' }, payload => {
+              this.tips.unshift(payload.new);
+            })
+            .subscribe();
 
-          supabase.from('clinic_news').on('INSERT', payload => {
-            this.news.push(payload.new);
-          }).subscribe();
+          supabase
+            .channel('realtime-news')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'clinic_news' }, payload => {
+              this.news.unshift(payload.new);
+            })
+            .subscribe();
         },
 
         async fetchTips() {
-          const { data } = await supabase.from('dental_tips').select('*').order('created_at', { ascending: false });
+          const { data, error } = await supabase.from('dental_tips').select('*').order('created_at', { ascending: false });
+          if (error) return console.error(error);
           this.tips = data || [];
         },
 
         async fetchNews() {
-          const { data } = await supabase.from('clinic_news').select('*').order('created_at', { ascending: false });
+          const { data, error } = await supabase.from('clinic_news').select('*').order('created_at', { ascending: false });
+          if (error) return console.error(error);
           this.news = data || [];
         },
 
         async addTip() {
           if(!this.newTip.description) return alert("Enter description");
 
-          const { data, error } = await supabase.from('dental_tips').insert([this.newTip]);
+          const { data, error } = await supabase.from('dental_tips').insert([this.newTip]).select();
           if(error) return alert(error.message);
 
-          this.tips.unshift(data[0]);
           this.newTip = { description:'', image_url:'' };
         },
 
         async addNews() {
           if(!this.newNews.description) return alert("Enter description");
 
-          const { data, error } = await supabase.from('clinic_news').insert([this.newNews]);
+          const { data, error } = await supabase.from('clinic_news').insert([this.newNews]).select();
           if(error) return alert(error.message);
 
-          this.news.unshift(data[0]);
           this.newNews = { description:'', image_url:'' };
         },
 
