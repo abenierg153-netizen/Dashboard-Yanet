@@ -3,35 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yanet Dental Clinic Admin</title>
+<title>Reports</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.28.0/dist/supabase.min.js"></script>
 </head>
-<body class="bg-gray-100 flex">
+<body class="bg-gray-100 flex justify-center">
 
-  <!-- Sidebar -->
-  <aside class="w-64 bg-white shadow-md h-screen fixed">
-    <div class="p-6 font-bold text-lg text-gray-700 border-b">Admin Panel</div>
-    <nav class="mt-6">
-      <ul class="space-y-2">
-        <li><a href="dashboard.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Dashboard</a></li>
-        <li><a href="appointments.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Appointments</a></li>
-        <li><a href="patients.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Patients</a></li>
-        <li><a href="services.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Services</a></li>
-        <li><a href="reports.html" class="block px-6 py-2 bg-gray-100 rounded">Reports ↑</a></li>
-        <li><a href="settings.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Settings</a></li>
-        <li><a href="feedback.html" class="block px-6 py-2 hover:bg-gray-100 rounded">Feedback</a></li>
-      </ul>
-    </nav>
-  </aside>
-
-  <!-- Main Content -->
-  <main class="flex-1 ml-64 p-6">
+  <!-- Main Container -->
+  <main class="w-full max-w-4xl p-6">
 
     <!-- Header -->
-    <header class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-700">Reports</h1>
+    <header class="mb-6 flex items-center">
+      <h1 class="text-2xl font-bold text-gray-700 flex items-center">
+        Reports <span class="ml-2">↑</span>
+      </h1>
     </header>
 
     <!-- Totals Cards -->
@@ -93,6 +79,7 @@
 
   </main>
 
+  <!-- ===== JavaScript ===== -->
   <script>
     const supabaseUrl = 'https://YOUR_PROJECT_URL.supabase.co';
     const supabaseKey = 'YOUR_ANON_KEY';
@@ -156,7 +143,7 @@
         let valA = a[column]; let valB = b[column];
         if(['leads','conversions','revenue'].includes(column)){ valA=Number(valA); valB=Number(valB); }
         if(valA<valB) return marketingSortDirection[column]==='asc'?-1:1;
-        if(valA>if(valA>valB) return marketingSortDirection[column]==='asc'?1:-1;
+        if(valA>valB) return marketingSortDirection[column]==='asc'?1:-1;
         return 0;
       });
       updateMarketingDisplay();
@@ -164,23 +151,15 @@
 
     async function fetchAndUpdateReports() {
       try {
-        // Fetch data from Supabase
-        const { data: appointments, error: appointmentsError } = await supabase.from('appointments').select('*');
-        const { data: patients, error: patientsError } = await supabase.from('patients').select('*');
-        const { data: marketing, error: marketingError } = await supabase.from('marketing').select('*');
-
-        if(appointmentsError || patientsError || marketingError){
-          console.error('Supabase fetch error:', appointmentsError || patientsError || marketingError);
-          return;
-        }
-
+        const { data: appointments } = await supabase.from('appointments').select('*');
+        const { data: patients } = await supabase.from('patients').select('*');
+        const { data: marketing } = await supabase.from('marketing').select('*');
         totalAppointments = appointments.length;
         totalPatients = patients.length;
 
-        // Calculate monthly growth
         const monthlyCounts = {};
         appointments.forEach(a => {
-          const month = new Date(a.date).toLocaleString('default', {month:'short', year:'numeric'});
+          const month = new Date(a.date).toLocaleString('default',{month:'short',year:'numeric'});
           monthlyCounts[month] = (monthlyCounts[month] || 0) + 1;
         });
 
@@ -190,7 +169,6 @@
         monthlyGrowthChart.data.datasets[0].data = monthlyGrowthData.values;
         monthlyGrowthChart.update();
 
-        // Marketing data
         marketingData = marketing || [];
         updateTotalsDisplay();
         updateMarketingDisplay();
@@ -199,10 +177,7 @@
       }
     }
 
-    // Initial fetch
     fetchAndUpdateReports();
-
-    // Refresh every 60 seconds
     setInterval(fetchAndUpdateReports, 60000);
   </script>
 </body>
