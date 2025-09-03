@@ -6,6 +6,8 @@
   <title>Reports</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body class="bg-gray-50 font-sans text-gray-800">
 
@@ -19,10 +21,6 @@
       <span class="text-sm">Back</span>
     </a>
     <h1 class="text-xl font-bold text-gray-700">Reports</h1>
-    <!-- Export Button -->
-    <button onclick="window.print()" class="bg-blue-500 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-600">
-      Export PDF
-    </button>
   </header>
 
   <!-- Reports Content -->
@@ -32,18 +30,18 @@
     <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="bg-white p-6 rounded-2xl shadow">
         <h2 class="text-sm font-medium text-gray-500">Total Patients</h2>
-        <p class="text-2xl font-bold mt-2">1,245</p>
-        <span class="text-green-500 text-xs">+12% from last month</span>
+        <p id="totalPatients" class="text-2xl font-bold mt-2">--</p>
+        <span class="text-green-500 text-xs">Live</span>
       </div>
       <div class="bg-white p-6 rounded-2xl shadow">
         <h2 class="text-sm font-medium text-gray-500">Revenue</h2>
-        <p class="text-2xl font-bold mt-2">$32,450</p>
-        <span class="text-green-500 text-xs">+8% from last month</span>
+        <p id="totalRevenue" class="text-2xl font-bold mt-2">--</p>
+        <span class="text-green-500 text-xs">Live</span>
       </div>
       <div class="bg-white p-6 rounded-2xl shadow">
         <h2 class="text-sm font-medium text-gray-500">Appointments</h2>
-        <p class="text-2xl font-bold mt-2">326</p>
-        <span class="text-red-500 text-xs">-3% from last month</span>
+        <p id="totalAppointments" class="text-2xl font-bold mt-2">--</p>
+        <span class="text-green-500 text-xs">Live</span>
       </div>
     </section>
 
@@ -66,53 +64,95 @@
               <th class="p-3">Status</th>
             </tr>
           </thead>
-          <tbody class="text-sm divide-y">
-            <tr>
-              <td class="p-3">2025-09-01</td>
-              <td class="p-3">Monthly Revenue</td>
-              <td class="p-3">Revenue summary for August</td>
-              <td class="p-3 text-green-600 font-semibold">Completed</td>
-            </tr>
-            <tr>
-              <td class="p-3">2025-08-28</td>
-              <td class="p-3">Patient Report</td>
-              <td class="p-3">New patients registered</td>
-              <td class="p-3 text-green-600 font-semibold">Completed</td>
-            </tr>
-            <tr>
-              <td class="p-3">2025-08-25</td>
-              <td class="p-3">Appointments</td>
-              <td class="p-3">Missed vs Attended</td>
-              <td class="p-3 text-yellow-600 font-semibold">Pending</td>
-            </tr>
+          <tbody id="reportsTable" class="text-sm divide-y">
+            <!-- Filled by JS -->
           </tbody>
         </table>
       </div>
     </section>
   </main>
 
-  <!-- Chart Script -->
+  <!-- Chart + Supabase Script -->
   <script>
-    const ctx = document.getElementById('servicesChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: ['Teeth Cleaning', 'Whitening', 'Braces', 'Implants'],
-        datasets: [{
-          data: [40, 25, 20, 15],
-          backgroundColor: ['#facc15', '#ef4444', '#22c55e', '#3b82f6'],
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: {
-            position: 'bottom'
-          }
-        }
+    // Init Supabase client (replace with your project details)
+    const SUPABASE_URL = "https://YOUR_PROJECT.supabase.co";
+    const SUPABASE_KEY = "YOUR_ANON_KEY";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let chart;
+
+    async function loadData() {
+      // 1. Fetch summary stats
+      const { data: stats } = await supabase
+        .from("clinic_stats")
+        .select("*")
+        .single();
+
+      if (stats) {
+        document.getElementById("totalPatients").innerText = stats.total_patients;
+        document.getElementById("totalRevenue").innerText = "$" + stats.revenue;
+        document.getElementById("totalAppointments").innerText = stats.appointments;
       }
-    });
+
+      // 2. Fetch services (for chart)
+      const { data: services } = await supabase
+        .from("services_demand")
+        .select("service, percentage");
+
+      if (services && services.length > 0) {
+        const labels = services.map(s => s.service);
+        const values = services.map(s => s.percentage);
+
+        if (chart) chart.destroy(); // reset if already exists
+        const ctx = document.getElementById("servicesChart").getContext("2d");
+        chart = new Chart(ctx, {
+          type: "doughnut",
+          data: {
+            labels: labels,
+            datasets: [{
+              data: values,
+              backgroundColor: ['#facc15', '#ef4444', '#22c55e', '#3b82f6', '#a855f7'],
+              borderWidth: 1
+            }]
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              legend: { position: "bottom" },
+              datalabels: {
+                formatter: (val) => val + "%",
+                color: "#fff",
+                font: { weight: "bold" }
+              }
+            }
+          },
+          plugins: [ChartDataLabels]
+        });
+      }
+
+      // 3. Fetch reports (for table)
+      const { data: reports } = await supabase
+        .from("reports")
+        .select("*")
+        .order("date", { ascending: false })
+        .limit(5);
+
+      const tableBody = document.getElementById("reportsTable");
+      tableBody.innerHTML = "";
+      if (reports) {
+        reports.forEach(r => {
+          const row = `<tr>
+            <td class="p-3">${r.date}</td>
+            <td class="p-3">${r.type}</td>
+            <td class="p-3">${r.details}</td>
+            <td class="p-3 font-semibold ${r.status === 'Completed' ? 'text-green-600' : 'text-yellow-600'}">${r.status}</td>
+          </tr>`;
+          tableBody.innerHTML += row;
+        });
+      }
+    }
+
+    loadData();
   </script>
 
 </body>
