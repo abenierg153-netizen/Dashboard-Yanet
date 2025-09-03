@@ -66,36 +66,6 @@
     </div>
 
   </div>
-  <!-- Add Before & After button inside your Tabs div -->
-<button @click="activeTab='beforeAfter'" 
-        :class="activeTab==='beforeAfter' ? 'border-b-2 border-blue-500 font-semibold' : ''"
-        class="py-2 px-4">Before & After</button>
-
-<!-- Before & After Form -->
-<div x-show="activeTab==='beforeAfter'" class="space-y-4">
-  <h2 class="font-bold text-lg">Add Before & After Review</h2>
-
-  <!-- Loop for 9 customers -->
-  <template x-for="(review, index) in reviews" :key="index">
-    <div class="p-3 border rounded bg-white shadow space-y-2">
-      <div class="flex gap-2">
-        <div class="flex-1">
-          <label class="text-sm font-semibold text-gray-700">Before</label>
-          <input type="file" @change="uploadReviewImage($event, index+1, 'before')" class="border px-2 py-1 rounded w-full"/>
-          <img :src="review.before_image_url" class="mt-1 w-full h-32 object-cover rounded" x-show="review.before_image_url"/>
-        </div>
-        <div class="flex-1">
-          <label class="text-sm font-semibold text-gray-700">After</label>
-          <input type="file" @change="uploadReviewImage($event, index+1, 'after')" class="border px-2 py-1 rounded w-full"/>
-          <img :src="review.after_image_url" class="mt-1 w-full h-32 object-cover rounded" x-show="review.after_image_url"/>
-        </div>
-      </div>
-      <textarea x-model="review.comment" placeholder="Comment" class="w-full border px-2 py-1 rounded"></textarea>
-      <button @click="updateReview(index+1, review)" class="px-4 py-2 bg-blue-500 text-white rounded shadow">Update Review</button>
-    </div>
-  </template>
-</div>
-<script>
 <script>
   // Add these inside your Alpine.js function
   reviews: Array(9).fill({ before_image_url: '', after_image_url: '', comment: '' }),
